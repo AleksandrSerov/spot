@@ -1,21 +1,146 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Rect } from 'react-konva';
 
+type Direction = 'right' | 'left' | 'up' | 'down';
+type DirectionKey = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp';
+
+const directionByButton = {
+	ArrowRight: 'right' as const,
+	ArrowLeft: 'left' as const,
+	ArrowUp: 'up' as const,
+	ArrowDown: 'down' as const,
+};
+
+const getXBound = (pos: number) => {
+	if (pos < 0) {
+		return 0;
+	}
+
+	if (pos > window.innerWidth - 500) {
+		return window.innerWidth - 500;
+	}
+
+	return pos;
+};
+
+const getYBound = (pos: number) => {
+	if (pos < 0) {
+		return 0;
+	}
+
+	if (pos > window.innerHeight - 500) {
+		return window.innerHeight - 500;
+	}
+
+	return pos;
+};
+
 export const Map: React.FC = () => {
-	const handleClick = () => {
-		console.log('here');
+	const shapeRef = useRef(null);
+	const [x, setX] = useState(window.innerWidth / 2 - 250);
+	const [y, setY] = useState(window.innerHeight / 2 - 250);
+	const [scale, setScale] = useState({ x: 1, y: 1 });
+
+	const funcByDirection = {
+		right: () => {
+			setX((prevX) => prevX + 20);
+		},
+		left: () => {
+			setX((prevX) => prevX - 20);
+		},
+		up: () => {
+			setY((prevY) => prevY - 20);
+		},
+		down: () => {
+			setY((prevY) => prevY + 20);
+		},
+	};
+
+	const handleMove = (direction: Direction) => {
+		const executeMove = funcByDirection[direction];
+
+		executeMove();
+	};
+
+	const handleKeyDown = (e: KeyboardEvent) => {
+		const { key } = e;
+		if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(key)) {
+			const direction = directionByButton[key as DirectionKey];
+
+			handleMove(direction);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('keydown', handleKeyDown);
+
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, []);
+
+	const handleDragMove = (pos) => {
+		return {
+			x: getXBound(pos.x),
+			y: getYBound(pos.y),
+		};
+	};
+
+	const handleWheel = (e) => {
+		e.evt.preventDefault();
+		const oldScale = scale.x;
+		const target = e.target;
+		const stage = e.target.getStage();
+		const pointer = stage.getPointerPosition();
+
+		const mousePointTo = {
+			x: (pointer.x - target.x()) / oldScale,
+			y: (pointer.y - target.y()) / oldScale,
+		};
+
+		// how to scale? Zoom in? Or zoom out?
+		let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+		// when we zoom on trackpad, e.evt.ctrlKey is true
+		// in that case lets revert direction
+		if (e.evt.ctrlKey) {
+			direction = -direction;
+		}
+
+		const scaleByValue = 1.05;
+		const scaleBy = direction > 0 ? scaleByValue : 1 / scaleByValue;
+
+		const newScale = oldScale * scaleBy;
+
+		setScale({ x: newScale, y: newScale });
+
+		const newPos = {
+			x: pointer.x - mousePointTo.x * newScale,
+			y: pointer.y - mousePointTo.y * newScale,
+		};
+
+		e.target.position(newPos);
+	};
+
+	const handleDragEnd = (e) => {
+		const { attrs } = e.target;
+		setX(attrs.x);
+		setY(attrs.y);
 	};
 
 	return (
 		<Rect
-			x={ 20 }
-			y={ 20 }
+			ref={ shapeRef }
+			x={ x }
+			y={ y }
 			width={ 500 }
 			height={ 500 }
+			onWheel={ handleWheel }
+			scale={ scale }
 			fill='gray'
 			shadowBlur={ 5 }
-			onClick={ handleClick }
+			draggable
+			onDragEnd={ handleDragEnd }
+			dragBoundFunc={ handleDragMove }
 		/>
 	);
 };
