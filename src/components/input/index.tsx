@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 
 import styles from './index.module.css';
@@ -7,5 +8,5 @@ export type InputProps = {
 };
 
 export const Input: React.FC<InputProps> = ({ className }) => {
-	return <input className={cn(styles.input, className)} />;
+	return <input className={ cn(styles.input, className) } />;
 };
