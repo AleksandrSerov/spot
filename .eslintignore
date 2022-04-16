@@ -1,0 +1,10 @@
+node_modules
+dist/
+server/
+.parcel-cache
+.cache
+yarn.lock
+yarn-error.log
+cypress/fixtures
+commitlint.config.js
+package-lock.json

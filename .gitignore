@@ -1,0 +1,9 @@
+node_modules
+dist/
+.DS_Store
+.parcel-cache
+.cache
+yarn-error.log
+cypress/fixtures
+package-lock.json
+cypress/fixtures
