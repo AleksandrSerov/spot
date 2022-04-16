@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Rect } from 'react-konva';
+import { Rect, Group } from 'react-konva';
 
 type Direction = 'right' | 'left' | 'up' | 'down';
 type DirectionKey = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp';
@@ -36,11 +36,11 @@ const getYBound = (pos: number) => {
 	return pos;
 };
 
-export const Map: React.FC = () => {
+export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const shapeRef = useRef(null);
 	const [x, setX] = useState(window.innerWidth / 2 - 250);
 	const [y, setY] = useState(window.innerHeight / 2 - 250);
-	const [scale, setScale] = useState({ x: 1, y: 1 });
+	const [scale, setScale] = useState({ x: 100, y: 100 });
 
 	const funcByDirection = {
 		right: () => {
@@ -110,15 +110,15 @@ export const Map: React.FC = () => {
 		const scaleBy = direction > 0 ? scaleByValue : 1 / scaleByValue;
 
 		const newScale = oldScale * scaleBy;
-
-		setScale({ x: newScale, y: newScale });
+		const limited = direction > 0 ? Math.min(100, newScale) : Math.max(0.01, newScale);
+		setScale({ x: limited, y: limited });
 
 		const newPos = {
-			x: pointer.x - mousePointTo.x * newScale,
-			y: pointer.y - mousePointTo.y * newScale,
+			x: pointer.x - mousePointTo.x * limited,
+			y: pointer.y - mousePointTo.y * limited,
 		};
 
-		e.target.position(newPos);
+		// e.target.position(newPos);
 	};
 
 	const handleDragEnd = (e) => {
@@ -128,19 +128,29 @@ export const Map: React.FC = () => {
 	};
 
 	return (
-		<Rect
-			ref={ shapeRef }
+		<Group
 			x={ x }
 			y={ y }
+			ref={ shapeRef }
+			draggable
 			width={ 500 }
 			height={ 500 }
 			onWheel={ handleWheel }
 			scale={ scale }
-			fill='gray'
-			shadowBlur={ 5 }
-			draggable
 			onDragEnd={ handleDragEnd }
 			dragBoundFunc={ handleDragMove }
-		/>
+		>
+			<Group width={ 500 } height={ 500 }>
+				<Rect
+					width={ 500 }
+					height={ 500 }
+					shadowBlur={ 5 }
+					fill='gray'
+					strokeWidth={ 1 }
+					stroke='black'
+				/>
+				{children}
+			</Group>
+		</Group>
 	);
 };
