@@ -7,6 +7,6 @@ export type InputProps = {
 	className?: string;
 };
 
-export const Input: React.FC<InputProps> = ({ className }) => {
-	return <input className={ cn(styles.input, className) } />;
-};
+export const Input: React.FC<InputProps> = ({ className }) => (
+	<input className={ cn(styles.input, className) } />
+);

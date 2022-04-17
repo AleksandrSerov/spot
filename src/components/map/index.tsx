@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-
-import { Rect, Group } from 'react-konva';
+import { Group, Rect } from 'react-konva';
 
 type Direction = 'right' | 'left' | 'up' | 'down';
 type DirectionKey = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp';
@@ -78,24 +77,22 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, []);
 
-	const handleDragMove = (pos) => {
-		return {
-			x: getXBound(pos.x),
-			y: getYBound(pos.y),
-		};
-	};
+	const handleDragMove = (position) => ({
+		x: getXBound(position.x),
+		y: getYBound(position.y),
+	});
 
 	const handleWheel = (e) => {
 		e.evt.preventDefault();
 		const oldScale = scale.x;
-		const target = e.target;
-		const stage = e.target.getStage();
-		const pointer = stage.getPointerPosition();
+		// const target = e.target;
+		// const stage = e.target.getStage();
+		// const pointer = stage.getPointerPosition();
 
-		const mousePointTo = {
-			x: (pointer.x - target.x()) / oldScale,
-			y: (pointer.y - target.y()) / oldScale,
-		};
+		// const mousePointTo = {
+		// 	x: (pointer.x - target.x()) / oldScale,
+		// 	y: (pointer.y - target.y()) / oldScale,
+		// };
 
 		// how to scale? Zoom in? Or zoom out?
 		let direction = e.evt.deltaY > 0 ? 1 : -1;
@@ -113,10 +110,10 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 		const limited = direction > 0 ? Math.min(100, newScale) : Math.max(0.01, newScale);
 		setScale({ x: limited, y: limited });
 
-		const newPos = {
-			x: pointer.x - mousePointTo.x * limited,
-			y: pointer.y - mousePointTo.y * limited,
-		};
+		// const newPos = {
+		// 	x: pointer.x - mousePointTo.x * limited,
+		// 	y: pointer.y - mousePointTo.y * limited,
+		// };
 
 		// e.target.position(newPos);
 	};
@@ -141,14 +138,7 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 			dragBoundFunc={ handleDragMove }
 		>
 			<Group width={ 500 } height={ 500 }>
-				<Rect
-					width={ 500 }
-					height={ 500 }
-					shadowBlur={ 5 }
-					fill='gray'
-					strokeWidth={ 1 }
-					stroke='black'
-				/>
+				<Rect width={ 500 } height={ 500 } shadowBlur={ 5 } fill='gray' />
 				{children}
 			</Group>
 		</Group>
