@@ -11,6 +11,7 @@ export const Grid: React.FC<Props> = ({ width, height, visible = true }) => {
 	const generateH = () =>
 		new Array(250).fill(undefined).map((item, index) => {
 			const y = index * 2;
+
 			return {
 				points: [0, y, width, y],
 			};
@@ -19,11 +20,13 @@ export const Grid: React.FC<Props> = ({ width, height, visible = true }) => {
 	const generateV = () =>
 		new Array(250).fill(undefined).map((item, index) => {
 			const x = index * 2;
+
 			return {
 				points: [x, 0, x, height],
 			};
 		});
 	const lines = [...generateH(), ...generateV()];
+
 	return (
 		<Group visible={ visible }>
 			{lines.map(({ points }) => (

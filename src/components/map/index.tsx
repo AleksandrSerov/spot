@@ -64,6 +64,7 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 	const handleKeyDown = (e: KeyboardEvent) => {
 		const { key } = e;
+
 		if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(key)) {
 			const direction = directionByButton[key as DirectionKey];
 
@@ -108,6 +109,7 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 		const newScale = oldScale * scaleBy;
 		const limited = direction > 0 ? Math.min(100, newScale) : Math.max(0.01, newScale);
+
 		setScale({ x: limited, y: limited });
 
 		// const newPos = {
@@ -120,6 +122,7 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 	const handleDragEnd = (e) => {
 		const { attrs } = e.target;
+
 		setX(attrs.x);
 		setY(attrs.y);
 	};
@@ -129,7 +132,7 @@ export const Map: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 			x={ x }
 			y={ y }
 			ref={ shapeRef }
-			draggable
+			draggable={ true }
 			width={ 500 }
 			height={ 500 }
 			onWheel={ handleWheel }
