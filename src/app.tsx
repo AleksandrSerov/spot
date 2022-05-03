@@ -1,1 +1,1 @@
-export { App } from './components/ascii-renderer';
+export { App } from './components/grid';

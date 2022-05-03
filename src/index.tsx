@@ -1,5 +1,4 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import Stats from 'stats.js';
 
 import { App } from './app';
@@ -23,8 +22,7 @@ const animate = () => {
 
 requestAnimationFrame(animate);
 
-const container = document.getElementById('app');
+const root = document.getElementById('app');
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const root = createRoot(container!);
 
-root.render(<App />);
+ReactDOM.render(<App />, root);
