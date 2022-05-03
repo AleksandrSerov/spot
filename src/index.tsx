@@ -11,7 +11,7 @@ const stats = new Stats();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
-function animate() {
+const animate = () => {
 	stats.begin();
 
 	// monitored code goes here
@@ -19,7 +19,7 @@ function animate() {
 	stats.end();
 
 	requestAnimationFrame(animate);
-}
+};
 
 requestAnimationFrame(animate);
 

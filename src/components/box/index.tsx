@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export function Box(props: JSX.IntrinsicElements['mesh']) {
+export const Box = (props: JSX.IntrinsicElements['mesh']) => {
 	const ref = useRef<THREE.Mesh>(null!);
 	const [hovered, hover] = useState(false);
 	const [clicked, click] = useState(false);
@@ -22,4 +22,4 @@ export function Box(props: JSX.IntrinsicElements['mesh']) {
 			<meshStandardMaterial color={ hovered ? 'hotpink' : 'orange' } />
 		</mesh>
 	);
-}
+};
