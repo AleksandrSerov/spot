@@ -1,0 +1,10 @@
+.canvas {
+	display: block;
+	margin: 20px auto;
+	border: 1px solid black;
+}
+.controls {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	grid-gap: 20px;
+}

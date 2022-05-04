@@ -1,1 +1,1 @@
-export { App } from './components/grid';
+export { App } from './components/app';
