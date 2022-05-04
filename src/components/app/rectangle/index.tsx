@@ -9,13 +9,14 @@ type Props = {
 	width: number;
 	height: number;
 	alive: boolean;
-	onClick: () => void;
+	onClick: (e: any) => void;
+	onMouseOver: (e: any) => void;
 };
 
 const blackColorCode = '#000000';
 const whiteColorCode = '#ffffff';
 
-export const Rectangle: FC<Props> = ({ x, y, alive, onClick, width }) => {
+export const Rectangle: FC<Props> = ({ x, y, alive, onClick, onMouseOver, width }) => {
 	const draw = useCallback(
 		(g: PIXI.Graphics) => {
 			g.clear();
@@ -25,8 +26,9 @@ export const Rectangle: FC<Props> = ({ x, y, alive, onClick, width }) => {
 			g.drawRect(x, y, width, width);
 			g.endFill();
 			g.on('click', onClick);
+			g.on('mouseover', onMouseOver);
 		},
-		[alive, x, y, width, onClick],
+		[alive, x, y, width, onClick, onMouseOver],
 	);
 
 	return <Graphics x={ x } y={ y } draw={ draw } />;

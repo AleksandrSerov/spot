@@ -74,7 +74,7 @@ export const App = () => {
 	const [rules, setRules] = useState(grules.default);
 	const startRef = useRef<HTMLButtonElement>(null);
 	const timerRef = useRef<number | null>(null);
-	const handleClick = () => {
+	const handleClick = (e) => {
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => getNextTickDotStatus(dots, [i, j], rules)),
 		);
@@ -104,8 +104,12 @@ export const App = () => {
 	};
 
 	const handleDotClick = useCallback(
-		([y, x]: [number, number]) =>
-			() => {
+		([y, x]: [number, number], eventType: 'click' | 'mouseover') =>
+			(e) => {
+				if (eventType === 'mouseover' && e.data.buttons !== 1) {
+					return;
+				}
+
 				const updatedDots = dots.map((dotsArray, i) =>
 					dotsArray.map((dotValue, j) => {
 						if (x === j && y === i) {
@@ -127,7 +131,8 @@ export const App = () => {
 
 	const renderDot = ([i, j]: [number, number], dotValue: 0 | 1) => (
 		<Rectangle
-			onClick={ handleDotClick([i, j]) }
+			onClick={ handleDotClick([i, j], 'click') }
+			onMouseOver={ handleDotClick([i, j], 'mouseover') }
 			alive={ dotValue === 1 }
 			key={ `${i}_${j}` }
 			x={ (j * dotSize) / 2 }
