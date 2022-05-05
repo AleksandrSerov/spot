@@ -1,7 +1,8 @@
-import { FC, useCallback } from 'react';
-import { Graphics } from '@inlet/react-pixi';
-import { string2hex } from '@pixi/utils';
-import * as PIXI from 'pixi.js';
+import { FC } from 'react';
+import { Sprite } from '@inlet/react-pixi';
+
+const bDotSpriteUrl = new URL('./black.png?width=20&height=20', import.meta.url);
+const wDotSpriteUrl = new URL('./white.png?width=20&height=20', import.meta.url);
 
 type Props = {
 	x: number;
@@ -13,23 +14,14 @@ type Props = {
 	onMouseOver: (e: any) => void;
 };
 
-const blackColorCode = '#000000';
-const whiteColorCode = '#ffffff';
-
-export const Rectangle: FC<Props> = ({ x, y, alive, onClick, onMouseOver, width }) => {
-	const draw = useCallback(
-		(g: PIXI.Graphics) => {
-			g.clear();
-			g.removeAllListeners();
-			g.interactive = true;
-			g.beginFill(string2hex(alive ? blackColorCode : whiteColorCode));
-			g.drawRect(x, y, width, width);
-			g.endFill();
-			g.on('click', onClick);
-			g.on('mouseover', onMouseOver);
-		},
-		[alive, x, y, width, onClick, onMouseOver],
-	);
-
-	return <Graphics x={ x } y={ y } draw={ draw } />;
-};
+export const Rectangle: FC<Props> = ({ x, y, alive, onClick, onMouseOver, width }) => (
+	<Sprite
+		image={ alive ? bDotSpriteUrl.href : wDotSpriteUrl.href }
+		scale={ { x: width / 20, y: width / 20 } }
+		x={ x }
+		y={ y }
+		interactive={ true }
+		pointerdown={ onClick }
+		mouseover={ onMouseOver }
+	/>
+);

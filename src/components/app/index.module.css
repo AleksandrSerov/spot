@@ -1,10 +1,44 @@
+* {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app {
+	padding: 0 50px;
+}
 .canvas {
 	display: block;
-	margin: 20px auto;
+	margin: 24px auto;
 	border: 1px solid black;
 }
+
 .controls {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
-	grid-gap: 20px;
+	grid-gap: 24px;
+}
+
+.stats {
+	display: grid;
+	justify-content: end;
+
+	grid-template-columns: repeat(4, max-content);
+	margin-bottom: 12px;
+	text-transform: uppercase;
+}
+
+.stats div {
+	padding: 0 10px;
+	border-right: 1px solid black;
+}
+.stats div:first-child {
+	border-left: 1px solid black;
+}
+
+.selectField {
+	display: flex;
+	font-size: 18px;
+}
+
+.select {
+	min-width: 100px;
 }

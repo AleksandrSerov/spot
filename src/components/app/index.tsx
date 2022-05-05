@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 
@@ -8,11 +8,11 @@ import { Rectangle } from './rectangle';
 
 import styles from './index.module.css';
 const getRandomInt = (max: number) => Math.floor(Math.random() * max) as 0 | 1;
-const dotSize = 20;
+const DEFAULT_DOT_SIZE = 20;
 
 const canvasWidth = 800;
 
-const generateDots = (generateValue = () => getRandomInt(2)) => {
+const generateDots = (generateValue = () => getRandomInt(2), dotSize: number) => {
 	const size = canvasWidth / dotSize;
 
 	return new Array(size).fill(null).map(() => new Array(size).fill(null).map(generateValue));
@@ -70,11 +70,14 @@ const getNextTickDotStatus = (
 };
 
 export const App = () => {
-	const [dots, setDots] = useState(generateDots());
+	const [tickCount, setTickCount] = useState(0);
 	const [rules, setRules] = useState(grules.default);
+	const [dotSize, setDotSize] = useState(DEFAULT_DOT_SIZE);
+	const [dots, setDots] = useState(generateDots(undefined, dotSize));
 	const startRef = useRef<HTMLButtonElement>(null);
 	const timerRef = useRef<number | null>(null);
-	const handleClick = (e) => {
+	const handleClick = () => {
+		setTickCount((prevTickCount) => prevTickCount + 1);
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => getNextTickDotStatus(dots, [i, j], rules)),
 		);
@@ -82,12 +85,16 @@ export const App = () => {
 		setDots(updatedDots);
 	};
 
+	useEffect(() => {
+		setDots(generateDots(undefined, dotSize));
+	}, [dotSize]);
+
 	const handleGenerate = () => {
-		setDots(generateDots());
+		setDots(generateDots(undefined, dotSize));
 	};
 
 	const handleClear = () => {
-		setDots(generateDots(() => 0));
+		setDots(generateDots(() => 0, dotSize));
 	};
 
 	const handleToggle = () => {
@@ -135,19 +142,23 @@ export const App = () => {
 			onMouseOver={ handleDotClick([i, j], 'mouseover') }
 			alive={ dotValue === 1 }
 			key={ `${i}_${j}` }
-			x={ (j * dotSize) / 2 }
-			y={ (i * dotSize) / 2 }
+			x={ j * dotSize }
+			y={ i * dotSize }
 			width={ dotSize }
 			height={ dotSize }
 		/>
 	);
 
-	const handleChange = (e) => {
+	const handleChange = (e: any) => {
 		setRules(grules[e.target.value as 'islands' | 'corals' | 'default']);
 	};
 
+	const handleDotSizeChange = (e: any) => {
+		setDotSize(Number(e.target.value));
+	};
+
 	return (
-		<div>
+		<div className={ styles.app }>
 			<Stage
 				className={ styles.canvas }
 				width={ canvasWidth }
@@ -165,6 +176,24 @@ export const App = () => {
 				)}
 				<Grid width={ canvasWidth } height={ canvasWidth } dotWidth={ dotSize } />
 			</Stage>
+
+			<div className={ styles.stats }>
+				<div>Tick: {tickCount}</div>
+				<div>
+					Alive dots:{' '}
+					{dots.reduce(
+						(acc, dotsArray) =>
+							acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
+						0,
+					)}
+				</div>
+
+				<div>Available dots: {dots.length * dots.length}</div>
+				<div>
+					Canvas size: {canvasWidth}px X {canvasWidth}px
+				</div>
+			</div>
+
 			<div className={ styles.controls }>
 				<Button onClick={ handleToggle }>Start/Stop</Button>
 				<Button ref={ startRef } onClick={ handleClick }>
@@ -172,13 +201,30 @@ export const App = () => {
 				</Button>
 				<Button onClick={ handleGenerate }>Generate life</Button>
 				<Button onClick={ handleClear }>Clear field</Button>
-				<div>
+				<div className={ styles.selectField }>
 					<label htmlFor='rules-select'>Choose a game rules:</label>
-					<select name='rules' id='rules-select' onChange={ handleChange }>
+					<select
+						name='rules'
+						id='rules-select'
+						onChange={ handleChange }
+						className={ styles.select }
+					>
 						<option value='default'>Default</option>
 						<option value='corals'>Corals</option>
 						<option value='islands'>Islands</option>
 						<option value='fractals'>Fractals</option>
+					</select>
+				</div>
+				<div className={ styles.selectField }>
+					<label htmlFor='rules-select'>Choose a dot size:</label>
+					<select
+						name='Dot size'
+						id='dot-size'
+						onChange={ handleDotSizeChange }
+						className={ styles.select }
+					>
+						<option value='20'>20</option>
+						<option value='10'>10</option>
 					</select>
 				</div>
 			</div>
