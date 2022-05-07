@@ -3,15 +3,24 @@
 }
 
 .app {
-	padding: 0 50px;
+	padding: 0 24px;
 }
 .canvas {
 	display: block;
-	margin: 24px auto;
+	align-items: center;
 	border: 1px solid black;
+	overflow: scroll;
+}
+
+.playArea {
+	justify-content: center;
+	display: grid;
+	margin: 4px 0;
+	grid-gap: 4px;
 }
 
 .controls {
+	justify-self: end;
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
 	grid-gap: 24px;
@@ -20,7 +29,7 @@
 .stats {
 	display: grid;
 	justify-content: end;
-
+	align-self: end;
 	grid-template-columns: repeat(4, max-content);
 	margin-bottom: 12px;
 	text-transform: uppercase;

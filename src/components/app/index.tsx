@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 
 import { Button } from './button';
+import { ClickableAria } from './clickable-aria';
 import { Grid } from './grid';
 import { Rectangle } from './rectangle';
 
@@ -10,7 +11,8 @@ import styles from './index.module.css';
 const getRandomInt = (max: number) => Math.floor(Math.random() * max) as 0 | 1;
 const DEFAULT_DOT_SIZE = 20;
 
-const canvasWidth = 800;
+const canvasWidth = 1500;
+const canvasHeight = 800;
 
 const generateDots = (generateValue = () => getRandomInt(2), dotSize: number) => {
 	const size = canvasWidth / dotSize;
@@ -78,8 +80,9 @@ export const App = () => {
 	const timerRef = useRef<number | null>(null);
 	const handleClick = () => {
 		setTickCount((prevTickCount) => prevTickCount + 1);
+
 		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => getNextTickDotStatus(dots, [i, j], rules)),
+			dotsArray.map((_, j) => getNextTickDotStatus(dots, [i, j], rules)),
 		);
 
 		setDots(updatedDots);
@@ -107,48 +110,51 @@ export const App = () => {
 
 		timerRef.current = setInterval(() => {
 			startRef.current?.click();
-		}, 100);
+		}, 125);
 	};
 
-	const handleDotClick = useCallback(
-		([y, x]: [number, number], eventType: 'click' | 'mouseover') =>
-			(e) => {
-				if (eventType === 'mouseover' && e.data.buttons !== 1) {
-					return;
+	const handleDotClick = (eventType: 'click' | 'mouseover') => (e: any) => {
+		const { x: rawX, y: rawY } = e.data.global;
+		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+
+		if (eventType === 'mouseover' && e.data.buttons !== 1) {
+			return;
+		}
+		const updatedDots = dots.map((dotsArray, i) =>
+			dotsArray.map((dotValue, j) => {
+				if (x === j && y === i) {
+					if (dotValue === 0) {
+						return 1;
+					}
+
+					return 0;
 				}
 
-				const updatedDots = dots.map((dotsArray, i) =>
-					dotsArray.map((dotValue, j) => {
-						if (x === j && y === i) {
-							if (dotValue === 0) {
-								return 1;
-							}
+				return dotValue;
+			}),
+		);
 
-							return 0;
-						}
+		setDots(updatedDots);
+	};
 
-						return dotValue;
-					}),
-				);
+	const renderDot = ([i, j]: [number, number], dotValue: 0 | 1) => {
+		if (dotValue === 0) {
+			return null;
+		}
 
-				setDots(updatedDots);
-			},
-		[dots],
-	);
-
-	const renderDot = ([i, j]: [number, number], dotValue: 0 | 1) => (
-		<Rectangle
-			onClick={ handleDotClick([i, j], 'click') }
-			onMouseOver={ handleDotClick([i, j], 'mouseover') }
-			alive={ dotValue === 1 }
-			key={ `${i}_${j}` }
-			x={ j * dotSize }
-			y={ i * dotSize }
-			width={ dotSize }
-			height={ dotSize }
-		/>
-	);
-
+		return (
+			<Rectangle.Graphics
+				alive={ dotValue === 1 }
+				key={ `${i}_${j}` }
+				x={ j * dotSize }
+				y={ i * dotSize }
+				width={ dotSize }
+				height={ dotSize }
+				onClick={ handleDotClick('click') }
+				onMouseOver={ handleDotClick('mouseover') }
+			/>
+		);
+	};
 	const handleChange = (e: any) => {
 		setRules(grules[e.target.value as 'islands' | 'corals' | 'default']);
 	};
@@ -159,38 +165,46 @@ export const App = () => {
 
 	return (
 		<div className={ styles.app }>
-			<Stage
-				className={ styles.canvas }
-				width={ canvasWidth }
-				height={ canvasWidth }
-				options={ {
-					antialias: true,
-					autoDensity: true,
-					backgroundColor: string2hex('#ffffff'),
-					forceCanvas: false,
-					powerPreference: 'high-performance',
-				} }
-			>
-				{dots.map((dotsArray, i) =>
-					dotsArray.map((dotValue, j) => renderDot([i, j], dotValue)),
-				)}
-				<Grid width={ canvasWidth } height={ canvasWidth } dotWidth={ dotSize } />
-			</Stage>
+			<div className={ styles.playArea }>
+				<div className={ styles.canvas }>
+					<Stage
+						width={ canvasWidth }
+						height={ canvasHeight }
+						options={ {
+							backgroundColor: string2hex('#ffffff'),
+							powerPreference: 'high-performance',
+						} }
+					>
+						<ClickableAria
+							width={ canvasWidth }
+							height={ canvasHeight }
+							onClick={ handleDotClick('click') }
+							onMouseOver={ handleDotClick('mouseover') }
+						/>
 
-			<div className={ styles.stats }>
-				<div>Tick: {tickCount}</div>
-				<div>
-					Alive dots:{' '}
-					{dots.reduce(
-						(acc, dotsArray) =>
-							acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
-						0,
-					)}
+						{dots.map((dotsArray, i) =>
+							dotsArray.map((dotValue, j) => renderDot([i, j], dotValue)),
+						)}
+
+						<Grid width={ canvasWidth } height={ canvasHeight } dotWidth={ dotSize } />
+					</Stage>
 				</div>
 
-				<div>Available dots: {dots.length * dots.length}</div>
-				<div>
-					Canvas size: {canvasWidth}px X {canvasWidth}px
+				<div className={ styles.stats }>
+					<div>Tick: {tickCount}</div>
+					<div>
+						Population:{' '}
+						{dots.reduce(
+							(acc, dotsArray) =>
+								acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
+							0,
+						)}
+					</div>
+
+					<div>Max population: {dots.length * dots.length}</div>
+					<div>
+						Canvas size: {canvasWidth}px X {canvasHeight}px
+					</div>
 				</div>
 			</div>
 
@@ -225,6 +239,7 @@ export const App = () => {
 					>
 						<option value='20'>20</option>
 						<option value='10'>10</option>
+						<option value='5'>5</option>
 					</select>
 				</div>
 			</div>

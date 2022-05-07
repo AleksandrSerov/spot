@@ -16,11 +16,13 @@ export const Grid: FC<Props> = ({ width, height, dotWidth }) => {
 			g.lineStyle(1, string2hex('black'), 0.3);
 			g.moveTo(0, 0);
 			g.lineTo(width, 0);
-			for (let i = dotWidth; i < height; i += dotWidth) {
-				g.moveTo(0, i);
-				g.lineTo(width, i);
-				g.moveTo(i, 0);
-				g.lineTo(i, height);
+			for (let x = dotWidth; x < height; x += dotWidth) {
+				g.moveTo(0, x);
+				g.lineTo(width, x);
+			}
+			for (let y = dotWidth; y < width; y += dotWidth) {
+				g.moveTo(y, 0);
+				g.lineTo(y, height);
 			}
 		},
 		[dotWidth, height, width],

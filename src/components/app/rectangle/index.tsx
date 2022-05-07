@@ -1,10 +1,9 @@
 import { FC } from 'react';
-import { Sprite } from '@inlet/react-pixi';
 
-const bDotSpriteUrl = new URL('./black.png?width=20&height=20', import.meta.url);
-const wDotSpriteUrl = new URL('./white.png?width=20&height=20', import.meta.url);
+import { Graphics } from './graphics';
+import { Sprite } from './sprite';
 
-type Props = {
+export type RectangleProps = {
 	x: number;
 	y: number;
 	width: number;
@@ -14,14 +13,10 @@ type Props = {
 	onMouseOver: (e: any) => void;
 };
 
-export const Rectangle: FC<Props> = ({ x, y, alive, onClick, onMouseOver, width }) => (
-	<Sprite
-		image={ alive ? bDotSpriteUrl.href : wDotSpriteUrl.href }
-		scale={ { x: width / 20, y: width / 20 } }
-		x={ x }
-		y={ y }
-		interactive={ true }
-		pointerdown={ onClick }
-		mouseover={ onMouseOver }
-	/>
-);
+export const Rectangle: {
+	Graphics: FC<RectangleProps>;
+	Sprite: FC<RectangleProps>;
+} = {
+	Graphics,
+	Sprite,
+};
