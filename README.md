@@ -1,3 +1,10 @@
-Easy start react project
+# Conway's Game of Life
+![Alt Text](./demo.gif)
+## How to start
 
-Based on React, Typescript, CSS Modules, Parcel, Jest, Cypress
+```bash
+>>> git clone git@github.com:AleksandrSerov/spot.git
+>>>  cd spot
+>>>  yarn
+>>>  yarn start
+```
