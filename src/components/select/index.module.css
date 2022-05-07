@@ -1,0 +1,12 @@
+.component {
+	display: flex;
+	font-size: 18px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.select {
+	font-size: 18px;
+	min-height: 40px;
+	min-width: 100px;
+}

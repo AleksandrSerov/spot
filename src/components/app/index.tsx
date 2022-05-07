@@ -1,26 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 
+import spaceship3 from '../../patterns/spaceship3.json';
+import { Select } from '../select';
+
+import { generateDots } from './utils/generate-dots';
+import { moveTo } from './utils/move-to';
 import { Button } from './button';
 import { ClickableAria } from './clickable-aria';
 import { Grid } from './grid';
 import { Rectangle } from './rectangle';
+import { Stats } from './stats';
 
 import styles from './index.module.css';
-const getRandomInt = (max: number) => Math.floor(Math.random() * max) as 0 | 1;
+
 const DEFAULT_DOT_SIZE = 20;
 
 const canvasWidth = 1500;
-const canvasHeight = 800;
+const canvasHeight = 1000;
 
-const generateDots = (generateValue = () => getRandomInt(2), dotSize: number) => {
-	const size = canvasWidth / dotSize;
-
-	return new Array(size).fill(null).map(() => new Array(size).fill(null).map(generateValue));
-};
-
-const grules = {
+const gameRules = {
 	default: {
 		b: [3],
 		s: [2, 3],
@@ -39,10 +39,24 @@ const grules = {
 	},
 };
 
+const mergeDots = (dots1: Array<Array<0 | 1>>, dots2: Array<Array<0 | 1>>) =>
+	dots1.map((dotsArray, i) =>
+		dotsArray.map((_, j) => {
+			if (dots1[i][j] === 1) {
+				return 1;
+			}
+			if (dots1[i][j] === 0) {
+				return dots2[i][j];
+			}
+
+			return dots1[i][j];
+		}),
+	);
+
 const getNextTickDotStatus = (
 	dots: Array<Array<0 | 1>>,
 	dotCoordinates: [number, number],
-	rules = grules.default,
+	rules = gameRules.default,
 ) => {
 	const [i, j] = dotCoordinates;
 	const currentValue = dots[i][j];
@@ -70,14 +84,23 @@ const getNextTickDotStatus = (
 
 	return 0;
 };
+const defaultDots = generateDots({
+	width: canvasWidth,
+	height: canvasHeight,
+	size: DEFAULT_DOT_SIZE,
+	generateValue: () => 0,
+});
 
 export const App = () => {
+	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
+	const [prevDots, setPrevDots] = useState(defaultDots);
 	const [tickCount, setTickCount] = useState(0);
-	const [rules, setRules] = useState(grules.default);
+	const [rules, setRules] = useState(gameRules.default);
 	const [dotSize, setDotSize] = useState(DEFAULT_DOT_SIZE);
-	const [dots, setDots] = useState(generateDots(undefined, dotSize));
+	const [dots, setDots] = useState(defaultDots);
 	const startRef = useRef<HTMLButtonElement>(null);
 	const timerRef = useRef<number | null>(null);
+
 	const handleClick = () => {
 		setTickCount((prevTickCount) => prevTickCount + 1);
 
@@ -88,16 +111,19 @@ export const App = () => {
 		setDots(updatedDots);
 	};
 
-	useEffect(() => {
-		setDots(generateDots(undefined, dotSize));
-	}, [dotSize]);
-
 	const handleGenerate = () => {
-		setDots(generateDots(undefined, dotSize));
+		setDots(generateDots({ width: canvasWidth, height: canvasHeight, size: DEFAULT_DOT_SIZE }));
 	};
 
 	const handleClear = () => {
-		setDots(generateDots(() => 0, dotSize));
+		setDots(
+			generateDots({
+				width: canvasWidth,
+				height: canvasHeight,
+				size: DEFAULT_DOT_SIZE,
+				generateValue: () => 0,
+			}),
+		);
 	};
 
 	const handleToggle = () => {
@@ -110,7 +136,7 @@ export const App = () => {
 
 		timerRef.current = setInterval(() => {
 			startRef.current?.click();
-		}, 125);
+		}, 50);
 	};
 
 	const handleDotClick = (eventType: 'click' | 'mouseover') => (e: any) => {
@@ -118,6 +144,36 @@ export const App = () => {
 		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 
 		if (eventType === 'mouseover' && e.data.buttons !== 1) {
+			if (pointerMode === 'pattern') {
+				const fitted = (
+					dots.map((array, i) => array.map((_, j) => spaceship3[i]?.[j] ?? 0)) as Array<
+						Array<1 | 0>
+					>
+				)
+					.map(
+						moveTo({
+							axis: 'x',
+							direction: 1,
+							offset: x - Math.trunc(spaceship3[0].length / 2) - 1,
+						}),
+					)
+					.map(
+						moveTo({
+							axis: 'y',
+							direction: 1,
+							offset: y - Math.trunc(spaceship3.length / 2) - 1,
+						}),
+					);
+
+				setDots(mergeDots(fitted, prevDots));
+			}
+
+			return;
+		}
+
+		if (eventType === 'click' && pointerMode === 'pattern') {
+			setPointerMode('default');
+
 			return;
 		}
 		const updatedDots = dots.map((dotsArray, i) =>
@@ -155,18 +211,27 @@ export const App = () => {
 			/>
 		);
 	};
-	const handleChange = (e: any) => {
-		setRules(grules[e.target.value as 'islands' | 'corals' | 'default']);
+	const handleRulesChange = (e: any) => {
+		setRules(gameRules[e.target.value as 'islands' | 'corals' | 'default']);
 	};
 
 	const handleDotSizeChange = (e: any) => {
 		setDotSize(Number(e.target.value));
 	};
 
+	const population = dots.reduce(
+		(acc, dotsArray) => acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
+		0,
+	);
+
+	const maxPopulation = dots.length * dots.length;
+
 	return (
 		<div className={ styles.app }>
 			<div className={ styles.playArea }>
 				<div className={ styles.canvas }>
+					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+					{/* @ts-ignore */}
 					<Stage
 						width={ canvasWidth }
 						height={ canvasHeight }
@@ -189,23 +254,13 @@ export const App = () => {
 						<Grid width={ canvasWidth } height={ canvasHeight } dotWidth={ dotSize } />
 					</Stage>
 				</div>
-
-				<div className={ styles.stats }>
-					<div>Tick: {tickCount}</div>
-					<div>
-						Population:{' '}
-						{dots.reduce(
-							(acc, dotsArray) =>
-								acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
-							0,
-						)}
-					</div>
-
-					<div>Max population: {dots.length * dots.length}</div>
-					<div>
-						Canvas size: {canvasWidth}px X {canvasHeight}px
-					</div>
-				</div>
+				<Stats
+					canvasWidth={ canvasWidth }
+					canvasHeight={ canvasHeight }
+					population={ population }
+					maxPopulation={ maxPopulation }
+					tickCount={ tickCount }
+				/>
 			</div>
 
 			<div className={ styles.controls }>
@@ -215,33 +270,58 @@ export const App = () => {
 				</Button>
 				<Button onClick={ handleGenerate }>Generate life</Button>
 				<Button onClick={ handleClear }>Clear field</Button>
-				<div className={ styles.selectField }>
-					<label htmlFor='rules-select'>Choose a game rules:</label>
-					<select
-						name='rules'
-						id='rules-select'
-						onChange={ handleChange }
-						className={ styles.select }
-					>
-						<option value='default'>Default</option>
-						<option value='corals'>Corals</option>
-						<option value='islands'>Islands</option>
-						<option value='fractals'>Fractals</option>
-					</select>
-				</div>
-				<div className={ styles.selectField }>
-					<label htmlFor='rules-select'>Choose a dot size:</label>
-					<select
-						name='Dot size'
-						id='dot-size'
-						onChange={ handleDotSizeChange }
-						className={ styles.select }
-					>
-						<option value='20'>20</option>
-						<option value='10'>10</option>
-						<option value='5'>5</option>
-					</select>
-				</div>
+				<Button
+					onClick={ () => {
+						setPointerMode('pattern');
+						setPrevDots(dots);
+					} }
+				>
+					Copy pattern
+				</Button>
+				<Select
+					label='Choose a game rules'
+					onChange={ handleRulesChange }
+					id='rules-select'
+					name='rules'
+					options={ [
+						{
+							content: 'Default',
+							value: 'default',
+						},
+						{
+							content: 'Corals',
+							value: 'corals',
+						},
+						{
+							content: 'Islands',
+							value: 'islands',
+						},
+						{
+							content: 'Fractals',
+							value: 'fractals',
+						},
+					] }
+				/>
+				<Select
+					label='Choose a dot size:'
+					onChange={ handleDotSizeChange }
+					id='dot-size'
+					name='Rules'
+					options={ [
+						{
+							content: '20',
+							value: '20',
+						},
+						{
+							content: '10',
+							value: '10',
+						},
+						{
+							content: '5',
+							value: '5',
+						},
+					] }
+				/>
 			</div>
 		</div>
 	);

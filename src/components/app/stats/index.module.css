@@ -1,0 +1,16 @@
+.stats {
+	display: grid;
+	justify-content: end;
+	align-self: end;
+	grid-template-columns: repeat(4, max-content);
+	margin-bottom: 12px;
+	text-transform: uppercase;
+}
+
+.stats div {
+	padding: 0 10px;
+	border-right: 1px solid black;
+}
+.stats div:first-child {
+	border-left: 1px solid black;
+}

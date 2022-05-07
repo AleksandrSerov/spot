@@ -25,29 +25,3 @@
 	grid-template-columns: 1fr 1fr 1fr 1fr;
 	grid-gap: 24px;
 }
-
-.stats {
-	display: grid;
-	justify-content: end;
-	align-self: end;
-	grid-template-columns: repeat(4, max-content);
-	margin-bottom: 12px;
-	text-transform: uppercase;
-}
-
-.stats div {
-	padding: 0 10px;
-	border-right: 1px solid black;
-}
-.stats div:first-child {
-	border-left: 1px solid black;
-}
-
-.selectField {
-	display: flex;
-	font-size: 18px;
-}
-
-.select {
-	min-width: 100px;
-}

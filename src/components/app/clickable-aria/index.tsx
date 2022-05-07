@@ -24,7 +24,7 @@ export const ClickableAria: FC<Props> = memo(({ onClick, onMouseOver, width, hei
 
 			g.endFill();
 			g.on('click', onClick);
-			g.on('mouseover', onMouseOver);
+			g.on('mousemove', onMouseOver);
 		},
 		[width, height, onClick, onMouseOver],
 	);
