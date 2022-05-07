@@ -112,7 +112,7 @@ export const App = () => {
 	};
 
 	const handleGenerate = () => {
-		setDots(generateDots({ width: canvasWidth, height: canvasHeight, size: DEFAULT_DOT_SIZE }));
+		setDots(generateDots({ width: canvasWidth, height: canvasHeight, size: dotSize }));
 	};
 
 	const handleClear = () => {
@@ -120,7 +120,7 @@ export const App = () => {
 			generateDots({
 				width: canvasWidth,
 				height: canvasHeight,
-				size: DEFAULT_DOT_SIZE,
+				size: dotSize,
 				generateValue: () => 0,
 			}),
 		);
@@ -136,7 +136,7 @@ export const App = () => {
 
 		timerRef.current = setInterval(() => {
 			startRef.current?.click();
-		}, 50);
+		}, 150);
 	};
 
 	const handleDotClick = (eventType: 'click' | 'mouseover') => (e: any) => {
