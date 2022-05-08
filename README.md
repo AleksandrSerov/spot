@@ -1,4 +1,6 @@
 # Conway's Game of Life
+## [PLAY](https://aleksandrserov.github.io/spot/)
+
 ![Alt Text](./demo.gif)
 ## How to start
 
