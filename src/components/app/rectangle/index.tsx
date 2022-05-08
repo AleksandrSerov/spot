@@ -11,6 +11,7 @@ export type RectangleProps = {
 	alive: boolean;
 	onClick: (e: any) => void;
 	onMouseOver: (e: any) => void;
+	onPointerDown: (e: any) => void;
 };
 
 export const Rectangle: {

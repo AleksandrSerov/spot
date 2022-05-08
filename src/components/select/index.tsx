@@ -2,7 +2,7 @@ import React, { ReactNode, VFC } from 'react';
 
 import styles from './index.module.css';
 
-type Props = {
+export type SelectProps = {
 	onChange: React.ChangeEventHandler<HTMLSelectElement>;
 	label: string;
 	name: string;
@@ -13,7 +13,7 @@ type Props = {
 	}>;
 };
 
-export const Select: VFC<Props> = ({ onChange, id, name, options, label }) => (
+export const Select: VFC<SelectProps> = ({ onChange, id, name, options, label }) => (
 	<div className={ styles.component }>
 		<label htmlFor={ id }>{label}</label>
 		<select name={ name } id={ id } onChange={ onChange } className={ styles.select }>

@@ -5,7 +5,7 @@ import { string2hex } from '@pixi/utils';
 import spaceship from '../../patterns/spaceship.json';
 import spaceship2 from '../../patterns/spaceship2.json';
 import spaceship3 from '../../patterns/spaceship3.json';
-import { Select } from '../select';
+import { Select, SelectProps } from '../select';
 
 import { generateDots } from './utils/generate-dots';
 import { moveTo } from './utils/move-to';
@@ -96,6 +96,7 @@ const defaultDots = generateDots({
 export const App = () => {
 	const [pattern, setPattern] = useState(spaceship);
 	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
+	const [fillingDirection, setFillingDirection] = useState<1 | 0 | null>(null);
 	const [prevDots, setPrevDots] = useState(defaultDots);
 	const [tickCount, setTickCount] = useState(0);
 	const [rules, setRules] = useState(gameRules.default);
@@ -153,11 +154,18 @@ export const App = () => {
 		}, 150);
 	};
 
-	const handleDotClick = (eventType: 'click' | 'mouseover') => (e: any) => {
+	const handleDotMouseMove = (e: any) => {
 		const { x: rawX, y: rawY } = e.data.global;
+
 		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 
-		if (eventType === 'mouseover' && e.data.buttons !== 1) {
+		const leftMouseButtonPressed = e.data.buttons === 1;
+
+		if (!leftMouseButtonPressed) {
+			if (fillingDirection !== null) {
+				setFillingDirection(null);
+			}
+
 			if (pointerMode === 'pattern') {
 				const fitted = (
 					dots.map((array, i) => array.map((_, j) => pattern[i]?.[j] ?? 0)) as Array<
@@ -185,19 +193,59 @@ export const App = () => {
 			return;
 		}
 
-		if (eventType === 'click' && pointerMode === 'pattern') {
-			setPointerMode('default');
+		if (leftMouseButtonPressed && pointerMode === 'default' && fillingDirection === null) {
+			setFillingDirection(Math.abs(1 - dots[y][x]) as 0 | 1);
+		}
 
+		if (fillingDirection === null) {
 			return;
 		}
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => {
 				if (x === j && y === i) {
-					if (dotValue === 0) {
-						return 1;
-					}
+					return fillingDirection;
+				}
 
-					return 0;
+				return dotValue;
+			}),
+		);
+
+		setDots(updatedDots);
+	};
+
+	const handleDotClick = (e: any) => {
+		if (pointerMode === 'pattern') {
+			setPointerMode('default');
+		}
+		const { x: rawX, y: rawY } = e.data.global;
+		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+
+		const updatedDots = dots.map((dotsArray, i) =>
+			dotsArray.map((dotValue, j) => {
+				if (x === j && y === i) {
+					return Math.abs(1 - dotValue) as 0 | 1;
+				}
+
+				return dotValue;
+			}),
+		);
+
+		setDots(updatedDots);
+	};
+
+	const handlePointerDown = (e: any) => {
+		const { x: rawX, y: rawY } = e.data.global;
+		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+
+		setFillingDirection(Math.abs(1 - dots[y][x]) as 0 | 1);
+		if (fillingDirection === null) {
+			return;
+		}
+
+		const updatedDots = dots.map((dotsArray, i) =>
+			dotsArray.map((dotValue, j) => {
+				if (x === j && y === i) {
+					return fillingDirection;
 				}
 
 				return dotValue;
@@ -220,8 +268,9 @@ export const App = () => {
 				y={ i * dotSize }
 				width={ dotSize }
 				height={ dotSize }
-				onClick={ handleDotClick('click') }
-				onMouseOver={ handleDotClick('mouseover') }
+				onClick={ handleDotClick }
+				onMouseOver={ handleDotMouseMove }
+				onPointerDown={ handlePointerDown }
 			/>
 		);
 	};
@@ -239,12 +288,15 @@ export const App = () => {
 	);
 
 	const maxPopulation = dots.length * dots.length;
-	const handlePatternChange = (e) => {
+	const handlePatternChange: SelectProps['onChange'] = (e) => {
 		const map = {
 			spaceship1: spaceship,
-			spaceship2: spaceship2,
+			spaceship2,
+			spaceship3,
 		};
 
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		setPattern(map[e.target.value]);
 	};
 
@@ -258,6 +310,8 @@ export const App = () => {
 						width={ canvasWidth }
 						height={ canvasHeight }
 						options={ {
+							width: canvasWidth,
+							height: canvasHeight,
 							backgroundColor: string2hex('#ffffff'),
 							powerPreference: 'high-performance',
 						} }
@@ -265,9 +319,9 @@ export const App = () => {
 						<ClickableAria
 							width={ canvasWidth }
 							height={ canvasHeight }
-							dotSize={ dotSize }
-							onClick={ handleDotClick('click') }
-							onMouseOver={ handleDotClick('mouseover') }
+							onClick={ handleDotClick }
+							onMouseOver={ handleDotMouseMove }
+							onPointerDown={ handlePointerDown }
 						/>
 
 						{dots.map((dotsArray, i) =>
@@ -314,6 +368,10 @@ export const App = () => {
 						{
 							content: 'Spaceship2',
 							value: 'spaceship2',
+						},
+						{
+							content: 'Spaceship3',
+							value: 'spaceship3',
 						},
 					] }
 				/>
