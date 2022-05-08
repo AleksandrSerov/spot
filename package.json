@@ -15,7 +15,7 @@
 		"format": "prettier-eslint --write \"./{src,cypress}/**/*.{ts,tsx,css}\"",
 		"build": "parcel build --no-source-maps ./src/index.html",
 		"predeploy": "yarn build",
-		"deploy": "gh-pages -d ./dist",
+		"deploy": "gh-pages -d dist",
 		"postinstall": "npx simple-git-hooks"
 	},
 	"author": "Aleksandr Serov",
