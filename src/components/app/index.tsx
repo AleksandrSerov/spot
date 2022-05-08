@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 
+import spaceship from '../../patterns/spaceship.json';
+import spaceship2 from '../../patterns/spaceship2.json';
 import spaceship3 from '../../patterns/spaceship3.json';
 import { Select } from '../select';
 
@@ -92,6 +94,7 @@ const defaultDots = generateDots({
 });
 
 export const App = () => {
+	const [pattern, setPattern] = useState(spaceship);
 	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
 	const [prevDots, setPrevDots] = useState(defaultDots);
 	const [tickCount, setTickCount] = useState(0);
@@ -100,6 +103,17 @@ export const App = () => {
 	const [dots, setDots] = useState(defaultDots);
 	const startRef = useRef<HTMLButtonElement>(null);
 	const timerRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		setDots(
+			generateDots({
+				generateValue: () => 0,
+				width: canvasWidth,
+				height: canvasHeight,
+				size: dotSize,
+			}),
+		);
+	}, [dotSize]);
 
 	const handleClick = () => {
 		setTickCount((prevTickCount) => prevTickCount + 1);
@@ -146,7 +160,7 @@ export const App = () => {
 		if (eventType === 'mouseover' && e.data.buttons !== 1) {
 			if (pointerMode === 'pattern') {
 				const fitted = (
-					dots.map((array, i) => array.map((_, j) => spaceship3[i]?.[j] ?? 0)) as Array<
+					dots.map((array, i) => array.map((_, j) => pattern[i]?.[j] ?? 0)) as Array<
 						Array<1 | 0>
 					>
 				)
@@ -154,14 +168,14 @@ export const App = () => {
 						moveTo({
 							axis: 'x',
 							direction: 1,
-							offset: x - Math.trunc(spaceship3[0].length / 2) - 1,
+							offset: x - Math.trunc(pattern[0].length / 2) - 1,
 						}),
 					)
 					.map(
 						moveTo({
 							axis: 'y',
 							direction: 1,
-							offset: y - Math.trunc(spaceship3.length / 2) - 1,
+							offset: y - Math.trunc(pattern.length / 2) - 1,
 						}),
 					);
 
@@ -225,6 +239,14 @@ export const App = () => {
 	);
 
 	const maxPopulation = dots.length * dots.length;
+	const handlePatternChange = (e) => {
+		const map = {
+			spaceship1: spaceship,
+			spaceship2: spaceship2,
+		};
+
+		setPattern(map[e.target.value]);
+	};
 
 	return (
 		<div className={ styles.app }>
@@ -243,6 +265,7 @@ export const App = () => {
 						<ClickableAria
 							width={ canvasWidth }
 							height={ canvasHeight }
+							dotSize={ dotSize }
 							onClick={ handleDotClick('click') }
 							onMouseOver={ handleDotClick('mouseover') }
 						/>
@@ -278,6 +301,22 @@ export const App = () => {
 				>
 					Copy pattern
 				</Button>
+				<Select
+					label='Choose pattern for copy'
+					onChange={ handlePatternChange }
+					id='pattern-select'
+					name='Pattern select'
+					options={ [
+						{
+							content: 'Spaceship1',
+							value: 'spaceship1',
+						},
+						{
+							content: 'Spaceship2',
+							value: 'spaceship2',
+						},
+					] }
+				/>
 				<Select
 					label='Choose a game rules'
 					onChange={ handleRulesChange }

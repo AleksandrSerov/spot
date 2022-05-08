@@ -7,13 +7,14 @@ import * as PIXI from 'pixi.js';
 export type Props = {
 	width: number;
 	height: number;
+	dotSize: number;
 	onClick: (e: any) => void;
 	onMouseOver: (e: any) => void;
 };
 
 const blackColorCode = '#fffff';
 
-export const ClickableAria: FC<Props> = memo(({ onClick, onMouseOver, width, height }) => {
+export const ClickableAria: FC<Props> = memo(({ onClick, onMouseOver, width, height, dotSize }) => {
 	const draw = useCallback(
 		(g: PIXI.Graphics) => {
 			g.clear();
@@ -26,7 +27,7 @@ export const ClickableAria: FC<Props> = memo(({ onClick, onMouseOver, width, hei
 			g.on('click', onClick);
 			g.on('mousemove', onMouseOver);
 		},
-		[width, height, onClick, onMouseOver],
+		[width, height, onClick, onMouseOver, dotSize],
 	);
 
 	return <PixiGraphics x={ 0 } y={ 0 } draw={ draw } />;
