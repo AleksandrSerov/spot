@@ -17,8 +17,8 @@ import styles from './index.module.css';
 
 const DEFAULT_DOT_SIZE = 20;
 
-const canvasWidth = 1500;
-const canvasHeight = 1000;
+const canvasWidth = 1200;
+const canvasHeight = 800;
 
 const gameRules = {
 	default: {
