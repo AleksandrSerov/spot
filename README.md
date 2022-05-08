@@ -5,8 +5,8 @@
 ## How to start
 
 ```bash
->>> git clone git@github.com:AleksandrSerov/spot.git
->>>  cd spot
->>>  yarn
->>>  yarn start
+$ git clone git@github.com:AleksandrSerov/spot.git
+$ cd spot
+$ yarn
+$ yarn start
 ```

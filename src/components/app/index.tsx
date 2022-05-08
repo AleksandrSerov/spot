@@ -214,8 +214,11 @@ export const App = () => {
 	};
 
 	const handleDotClick = (e: any) => {
+		console.log('here');
 		if (pointerMode === 'pattern') {
 			setPointerMode('default');
+
+			return;
 		}
 		const { x: rawX, y: rawY } = e.data.global;
 		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
@@ -234,18 +237,20 @@ export const App = () => {
 	};
 
 	const handlePointerDown = (e: any) => {
-		const { x: rawX, y: rawY } = e.data.global;
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
-
-		setFillingDirection(Math.abs(1 - dots[y][x]) as 0 | 1);
-		if (fillingDirection === null) {
+		if (pointerMode === 'pattern') {
 			return;
 		}
+
+		const { x: rawX, y: rawY } = e.data.global;
+		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+		const direction = Math.abs(1 - dots[y][x]) as 0 | 1;
+
+		setFillingDirection(direction);
 
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => {
 				if (x === j && y === i) {
-					return fillingDirection;
+					return direction;
 				}
 
 				return dotValue;
