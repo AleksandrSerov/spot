@@ -16,6 +16,7 @@ import { moveTo } from './utils/move-to';
 import { ClickableAria } from './clickable-aria';
 import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
 import { Grid } from './grid';
+import { Help } from './help';
 import { Rectangle } from './rectangle';
 import { Stats } from './stats';
 
@@ -286,7 +287,6 @@ export const App: FC = () => {
 					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
 				</Stage>
 			</div>
-
 			<div className={ cn(styles.controls, [styles[controlsView]]) }>
 				<div
 					className={ styles.dropdownButton }
@@ -338,7 +338,7 @@ export const App: FC = () => {
 					label='Choose a dot size:'
 					onChange={ handleDotSizeChange }
 					id='dot-size'
-					name='Rules'
+					name='Dot size'
 					value={ String(dotSize) }
 					options={ [
 						{
@@ -362,24 +362,25 @@ export const App: FC = () => {
 					name='rules'
 					options={ [
 						{
-							content: 'Default',
+							content: 'Default - S2/B23',
 							value: 'default',
 						},
 						{
-							content: 'Corals',
+							content: 'Corals - S0123456789/B3',
 							value: 'corals',
 						},
 						{
-							content: 'Islands',
+							content: 'Islands - S45678/B5678',
 							value: 'islands',
 						},
 						{
-							content: 'Fractals',
+							content: 'Fractals - S0123456789/B1',
 							value: 'fractals',
 						},
 					] }
 				/>
 			</div>
+			<Help />
 		</div>
 	);
 };

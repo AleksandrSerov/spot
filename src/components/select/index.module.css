@@ -6,7 +6,8 @@
 }
 
 .select {
+	text-overflow: ellipsis;
 	font-size: 18px;
 	min-height: 40px;
-	min-width: 100px;
+	max-width: 120px;
 }
