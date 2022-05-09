@@ -1,105 +1,49 @@
-import { useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
+import cn from 'classnames';
 
 import spaceship from '../../patterns/spaceship.json';
 import spaceship2 from '../../patterns/spaceship2.json';
 import spaceship3 from '../../patterns/spaceship3.json';
+import { Button } from '../button';
 import { Select, SelectProps } from '../select';
 
 import { generateDots } from './utils/generate-dots';
+import { getNextTickDotStatus } from './utils/get-next-tick-dot-status';
+import { mergeDots } from './utils/merge-dots';
 import { moveTo } from './utils/move-to';
-import { Button } from './button';
 import { ClickableAria } from './clickable-aria';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
 import { Grid } from './grid';
 import { Rectangle } from './rectangle';
 import { Stats } from './stats';
 
 import styles from './index.module.css';
 
-const DEFAULT_DOT_SIZE = 20;
-
-const canvasWidth = 1200;
-const canvasHeight = 800;
-
-const gameRules = {
-	default: {
-		b: [3],
-		s: [2, 3],
-	},
-	corals: {
-		b: [3],
-		s: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-	},
-	islands: {
-		b: [5, 6, 7, 8],
-		s: [4, 5, 6, 7, 8],
-	},
-	fractals: {
-		b: [1],
-		s: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-	},
+const patternsMap = {
+	spaceship1: spaceship,
+	spaceship2,
+	spaceship3,
 };
 
-const mergeDots = (dots1: Array<Array<0 | 1>>, dots2: Array<Array<0 | 1>>) =>
-	dots1.map((dotsArray, i) =>
-		dotsArray.map((_, j) => {
-			if (dots1[i][j] === 1) {
-				return 1;
-			}
-			if (dots1[i][j] === 0) {
-				return dots2[i][j];
-			}
-
-			return dots1[i][j];
-		}),
-	);
-
-const getNextTickDotStatus = (
-	dots: Array<Array<0 | 1>>,
-	dotCoordinates: [number, number],
-	rules = gameRules.default,
-) => {
-	const [i, j] = dotCoordinates;
-	const currentValue = dots[i][j];
-
-	const aroundDotsValues = [
-		dots[i - 1]?.[j - 1],
-		dots[i - 1]?.[j],
-		dots[i - 1]?.[j + 1],
-		dots[i][j - 1],
-		dots[i][j + 1],
-		dots[i + 1]?.[j - 1],
-		dots[i + 1]?.[j],
-		dots[i + 1]?.[j + 1],
-	];
-
-	const sumAlive = aroundDotsValues.reduce((acc, value) => acc + value, 0 as number);
-
-	if (currentValue === 1 && rules.s.includes(sumAlive)) {
-		return 1;
-	}
-
-	if (currentValue === 0 && rules.b.includes(sumAlive)) {
-		return 1;
-	}
-
-	return 0;
-};
 const defaultDots = generateDots({
-	width: canvasWidth,
-	height: canvasHeight,
+	width: CANVAS_WIDTH,
+	height: CANVAS_HEIGHT,
 	size: DEFAULT_DOT_SIZE,
 	generateValue: () => 0,
 });
 
-export const App = () => {
-	const [pattern, setPattern] = useState(spaceship);
+export const App: FC = () => {
+	const [controlsView, setControlsView] = useState<'full' | 'minimal'>('full');
+	const [pattern, setPattern] = useState<'spaceship1' | 'spaceship2' | 'spaceship3'>(
+		'spaceship1',
+	);
 	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
-	const [fillingDirection, setFillingDirection] = useState<1 | 0 | null>(null);
+	const [fillingMode, setFillingMode] = useState<1 | 0 | null>(null);
 	const [prevDots, setPrevDots] = useState(defaultDots);
 	const [tickCount, setTickCount] = useState(0);
-	const [rules, setRules] = useState(gameRules.default);
+	const [rules, setRules] = useState(GAME_RULES.default);
 	const [dotSize, setDotSize] = useState(DEFAULT_DOT_SIZE);
 	const [dots, setDots] = useState(defaultDots);
 	const startRef = useRef<HTMLButtonElement>(null);
@@ -109,8 +53,8 @@ export const App = () => {
 		setDots(
 			generateDots({
 				generateValue: () => 0,
-				width: canvasWidth,
-				height: canvasHeight,
+				width: CANVAS_WIDTH,
+				height: CANVAS_HEIGHT,
 				size: dotSize,
 			}),
 		);
@@ -127,14 +71,14 @@ export const App = () => {
 	};
 
 	const handleGenerate = () => {
-		setDots(generateDots({ width: canvasWidth, height: canvasHeight, size: dotSize }));
+		setDots(generateDots({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, size: dotSize }));
 	};
 
 	const handleClear = () => {
 		setDots(
 			generateDots({
-				width: canvasWidth,
-				height: canvasHeight,
+				width: CANVAS_WIDTH,
+				height: CANVAS_HEIGHT,
 				size: dotSize,
 				generateValue: () => 0,
 			}),
@@ -162,13 +106,15 @@ export const App = () => {
 		const leftMouseButtonPressed = e.data.buttons === 1;
 
 		if (!leftMouseButtonPressed) {
-			if (fillingDirection !== null) {
-				setFillingDirection(null);
+			if (fillingMode !== null) {
+				setFillingMode(null);
 			}
 
 			if (pointerMode === 'pattern') {
+				const patternValue = patternsMap[pattern];
+
 				const fitted = (
-					dots.map((array, i) => array.map((_, j) => pattern[i]?.[j] ?? 0)) as Array<
+					dots.map((array, i) => array.map((_, j) => patternValue[i]?.[j] ?? 0)) as Array<
 						Array<1 | 0>
 					>
 				)
@@ -176,14 +122,14 @@ export const App = () => {
 						moveTo({
 							axis: 'x',
 							direction: 1,
-							offset: x - Math.trunc(pattern[0].length / 2) - 1,
+							offset: x - Math.trunc(patternValue[0].length / 2) - 1,
 						}),
 					)
 					.map(
 						moveTo({
 							axis: 'y',
 							direction: 1,
-							offset: y - Math.trunc(pattern.length / 2) - 1,
+							offset: y - Math.trunc(patternValue.length / 2) - 1,
 						}),
 					);
 
@@ -193,17 +139,17 @@ export const App = () => {
 			return;
 		}
 
-		if (leftMouseButtonPressed && pointerMode === 'default' && fillingDirection === null) {
-			setFillingDirection(Math.abs(1 - dots[y][x]) as 0 | 1);
+		if (leftMouseButtonPressed && pointerMode === 'default' && fillingMode === null) {
+			setFillingMode(Math.abs(1 - dots[y][x]) as 0 | 1);
 		}
 
-		if (fillingDirection === null) {
+		if (fillingMode === null) {
 			return;
 		}
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => {
 				if (x === j && y === i) {
-					return fillingDirection;
+					return fillingMode;
 				}
 
 				return dotValue;
@@ -214,7 +160,6 @@ export const App = () => {
 	};
 
 	const handleDotClick = (e: any) => {
-		console.log('here');
 		if (pointerMode === 'pattern') {
 			setPointerMode('default');
 
@@ -245,7 +190,7 @@ export const App = () => {
 		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 		const direction = Math.abs(1 - dots[y][x]) as 0 | 1;
 
-		setFillingDirection(direction);
+		setFillingMode(direction);
 
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => {
@@ -279,8 +224,9 @@ export const App = () => {
 			/>
 		);
 	};
+
 	const handleRulesChange = (e: any) => {
-		setRules(gameRules[e.target.value as 'islands' | 'corals' | 'default']);
+		setRules(GAME_RULES[e.target.value as 'islands' | 'corals' | 'default']);
 	};
 
 	const handleDotSizeChange = (e: any) => {
@@ -294,61 +240,68 @@ export const App = () => {
 
 	const maxPopulation = dots.length * dots.length;
 	const handlePatternChange: SelectProps['onChange'] = (e) => {
-		const map = {
-			spaceship1: spaceship,
-			spaceship2,
-			spaceship3,
-		};
-
+		if (e.target.value === 'spaceship3') {
+			setDotSize(5);
+		}
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		setPattern(map[e.target.value]);
+		setPattern(e.target.value);
 	};
 
 	return (
 		<div className={ styles.app }>
-			<div className={ styles.playArea }>
-				<div className={ styles.canvas }>
-					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-					{/* @ts-ignore */}
-					<Stage
-						width={ canvasWidth }
-						height={ canvasHeight }
-						options={ {
-							width: canvasWidth,
-							height: canvasHeight,
-							backgroundColor: string2hex('#ffffff'),
-							powerPreference: 'high-performance',
-						} }
-					>
-						<ClickableAria
-							width={ canvasWidth }
-							height={ canvasHeight }
-							onClick={ handleDotClick }
-							onMouseOver={ handleDotMouseMove }
-							onPointerDown={ handlePointerDown }
-						/>
+			<Stats
+				className={ styles.stats }
+				canvasWidth={ CANVAS_WIDTH }
+				canvasHeight={ CANVAS_HEIGHT }
+				population={ population }
+				maxPopulation={ maxPopulation }
+				tickCount={ tickCount }
+			/>
+			<div className={ styles.canvas }>
+				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+				{/* @ts-ignore */}
+				<Stage
+					width={ CANVAS_WIDTH }
+					height={ CANVAS_HEIGHT }
+					options={ {
+						width: CANVAS_WIDTH,
+						backgroundColor: string2hex('#ffffff'),
+						height: CANVAS_HEIGHT,
+						powerPreference: 'high-performance',
+					} }
+				>
+					<ClickableAria
+						width={ CANVAS_WIDTH }
+						height={ CANVAS_HEIGHT }
+						onClick={ handleDotClick }
+						onMouseOver={ handleDotMouseMove }
+						onPointerDown={ handlePointerDown }
+					/>
 
-						{dots.map((dotsArray, i) =>
-							dotsArray.map((dotValue, j) => renderDot([i, j], dotValue)),
-						)}
+					{dots.map((dotsArray, i) =>
+						dotsArray.map((dotValue, j) => renderDot([i, j], dotValue)),
+					)}
 
-						<Grid width={ canvasWidth } height={ canvasHeight } dotWidth={ dotSize } />
-					</Stage>
-				</div>
-				<Stats
-					canvasWidth={ canvasWidth }
-					canvasHeight={ canvasHeight }
-					population={ population }
-					maxPopulation={ maxPopulation }
-					tickCount={ tickCount }
-				/>
+					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
+				</Stage>
 			</div>
 
-			<div className={ styles.controls }>
-				<Button onClick={ handleToggle }>Start/Stop</Button>
+			<div className={ cn(styles.controls, [styles[controlsView]]) }>
+				<div
+					className={ styles.dropdownButton }
+					onClick={ () =>
+						setControlsView((prev) => (prev === 'full' ? 'minimal' : 'full'))
+					}
+				>
+					{controlsView === 'full' && 'Hide ▲'}
+					{controlsView === 'minimal' && 'Show ▼'}
+				</div>
+				<Button onClick={ handleToggle }>
+					{typeof timerRef.current === 'number' ? 'Stop' : 'Start'}
+				</Button>
 				<Button ref={ startRef } onClick={ handleClick }>
-					tick
+					Tick
 				</Button>
 				<Button onClick={ handleGenerate }>Generate life</Button>
 				<Button onClick={ handleClear }>Clear field</Button>
@@ -361,10 +314,11 @@ export const App = () => {
 					Copy pattern
 				</Button>
 				<Select
-					label='Choose pattern for copy'
+					label='Choose pattern, click Copy pattern'
 					onChange={ handlePatternChange }
 					id='pattern-select'
 					name='Pattern select'
+					value={ pattern }
 					options={ [
 						{
 							content: 'Spaceship1',
@@ -377,6 +331,27 @@ export const App = () => {
 						{
 							content: 'Spaceship3',
 							value: 'spaceship3',
+						},
+					] }
+				/>
+				<Select
+					label='Choose a dot size:'
+					onChange={ handleDotSizeChange }
+					id='dot-size'
+					name='Rules'
+					value={ String(dotSize) }
+					options={ [
+						{
+							content: '20',
+							value: '20',
+						},
+						{
+							content: '10',
+							value: '10',
+						},
+						{
+							content: '5',
+							value: '5',
 						},
 					] }
 				/>
@@ -401,26 +376,6 @@ export const App = () => {
 						{
 							content: 'Fractals',
 							value: 'fractals',
-						},
-					] }
-				/>
-				<Select
-					label='Choose a dot size:'
-					onChange={ handleDotSizeChange }
-					id='dot-size'
-					name='Rules'
-					options={ [
-						{
-							content: '20',
-							value: '20',
-						},
-						{
-							content: '10',
-							value: '10',
-						},
-						{
-							content: '5',
-							value: '5',
 						},
 					] }
 				/>

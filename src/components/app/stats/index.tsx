@@ -1,4 +1,5 @@
 import { VFC } from 'react';
+import cn from 'classnames';
 
 import styles from './index.module.css';
 
@@ -8,6 +9,7 @@ type Props = {
 	maxPopulation: number;
 	canvasWidth: number;
 	canvasHeight: number;
+	className?: string;
 };
 
 export const Stats: VFC<Props> = ({
@@ -16,8 +18,9 @@ export const Stats: VFC<Props> = ({
 	maxPopulation,
 	canvasWidth,
 	canvasHeight,
+	className,
 }) => (
-	<div className={ styles.stats }>
+	<div className={ cn(styles.stats, className) }>
 		<div>Tick: {tickCount}</div>
 		<div>Population: {population}</div>
 
