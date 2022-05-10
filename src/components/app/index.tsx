@@ -3,9 +3,10 @@ import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 import cn from 'classnames';
 
+import backrake from '../../patterns/backrake.json';
+import diehard from '../../patterns/die-hard.json';
 import spaceship from '../../patterns/spaceship.json';
 import spaceship2 from '../../patterns/spaceship2.json';
-import spaceship3 from '../../patterns/spaceship3.json';
 import { Button } from '../button';
 import { Select, SelectProps } from '../select';
 
@@ -25,7 +26,8 @@ import styles from './index.module.css';
 const patternsMap = {
 	spaceship1: spaceship,
 	spaceship2,
-	spaceship3,
+	backrake,
+	diehard,
 };
 
 const getRuleName = (rule: { s: Array<number>; b: Array<number> }) => {
@@ -47,9 +49,7 @@ export const App: FC = () => {
 	});
 
 	const [controlsView, setControlsView] = useState<'full' | 'minimal'>('full');
-	const [pattern, setPattern] = useState<'spaceship1' | 'spaceship2' | 'spaceship3'>(
-		'spaceship1',
-	);
+	const [pattern, setPattern] = useState<keyof typeof patternsMap>('spaceship1');
 
 	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
 	const [fillingMode, setFillingMode] = useState<1 | 0 | null>(null);
@@ -255,9 +255,6 @@ export const App: FC = () => {
 
 	const maxPopulation = dots.length * dots.length;
 	const handlePatternChange: SelectProps['onChange'] = (e) => {
-		if (e.target.value === 'spaceship3') {
-			setDotSize(5);
-		}
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		setPattern(e.target.value);
@@ -334,20 +331,10 @@ export const App: FC = () => {
 					id='pattern-select'
 					name='Pattern select'
 					value={ pattern }
-					options={ [
-						{
-							content: 'Spaceship1',
-							value: 'spaceship1',
-						},
-						{
-							content: 'Spaceship2',
-							value: 'spaceship2',
-						},
-						{
-							content: 'Spaceship3',
-							value: 'spaceship3',
-						},
-					] }
+					options={ Object.keys(patternsMap).map((patternName) => ({
+						content: patternName,
+						value: patternName,
+					})) }
 				/>
 				<Select
 					label='Choose a dot size:'

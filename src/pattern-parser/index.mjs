@@ -11,7 +11,7 @@ const parseValue = (raw) => {
 	return 1;
 };
 
-const patternFilepath = './spaceship3.txt';
+const patternFilepath = './index.txt';
 
 const parse = (file) => {
 	const [name, author, description, wikiLink, srcLink, ...pattern] = file.split(EOL);
