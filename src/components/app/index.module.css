@@ -18,7 +18,7 @@
 	background-color: rgb(32, 178, 170, 0.8);
 	display: grid;
 	grid-gap: 24px;
-	transition: all 0.5s;
+	transition: all ease-in-out 0.3s;
 }
 
 .dropdownButton {
@@ -31,7 +31,7 @@
 	height: auto;
 }
 .minimal {
-	height: 10px;
+	height: 20px;
 	overflow: hidden;
 }
 
@@ -43,8 +43,9 @@
 	background-color: rgb(60, 238, 229, 0.7);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) {
 	.controls {
-		max-height: 400px;
+		overflow: scroll;
+		max-height: 300px;
 	}
 }

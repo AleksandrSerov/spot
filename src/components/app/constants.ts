@@ -18,7 +18,3 @@ export const GAME_RULES = {
 };
 
 export const DEFAULT_DOT_SIZE = 20;
-export const CANVAS_WIDTH =
-	(Math.trunc(window.innerWidth / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
-export const CANVAS_HEIGHT =
-	(Math.trunc(window.innerHeight / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;

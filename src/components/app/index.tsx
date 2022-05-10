@@ -14,7 +14,7 @@ import { getNextTickDotStatus } from './utils/get-next-tick-dot-status';
 import { mergeDots } from './utils/merge-dots';
 import { moveTo } from './utils/move-to';
 import { ClickableAria } from './clickable-aria';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
+import { DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
 import { Grid } from './grid';
 import { Help } from './help';
 import { Rectangle } from './rectangle';
@@ -28,22 +28,28 @@ const patternsMap = {
 	spaceship3,
 };
 
-const defaultDots = generateDots({
-	width: CANVAS_WIDTH,
-	height: CANVAS_HEIGHT,
-	size: DEFAULT_DOT_SIZE,
-	generateValue: () => 0,
-});
-
 export const App: FC = () => {
+	const CANVAS_WIDTH = (Math.trunc(window.innerWidth / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
+	const CANVAS_HEIGHT =
+		(Math.trunc(window.innerHeight / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
+
+	const defaultDots = generateDots({
+		width: CANVAS_WIDTH,
+		height: CANVAS_HEIGHT,
+		size: DEFAULT_DOT_SIZE,
+		generateValue: () => 0,
+	});
+
 	const [controlsView, setControlsView] = useState<'full' | 'minimal'>('full');
 	const [pattern, setPattern] = useState<'spaceship1' | 'spaceship2' | 'spaceship3'>(
 		'spaceship1',
 	);
+
 	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
 	const [fillingMode, setFillingMode] = useState<1 | 0 | null>(null);
 	const [prevDots, setPrevDots] = useState(defaultDots);
 	const [tickCount, setTickCount] = useState(0);
+	const [playState, setPlayState] = useState<'iddle' | 'playing'>('iddle');
 	const [rules, setRules] = useState(GAME_RULES.default);
 	const [dotSize, setDotSize] = useState(DEFAULT_DOT_SIZE);
 	const [dots, setDots] = useState(defaultDots);
@@ -59,16 +65,18 @@ export const App: FC = () => {
 				size: dotSize,
 			}),
 		);
-	}, [dotSize]);
+	}, [CANVAS_HEIGHT, CANVAS_WIDTH, dotSize]);
 
-	const handleClick = () => {
+	const handleTick = () => {
 		setTickCount((prevTickCount) => prevTickCount + 1);
 
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((_, j) => getNextTickDotStatus(dots, [i, j], rules)),
-		);
+		setDots((prevDots) => {
+			const updatedDots = prevDots.map((dotsArray, i) =>
+				dotsArray.map((_, j) => getNextTickDotStatus(prevDots, [i, j], rules)),
+			);
 
-		setDots(updatedDots);
+			return updatedDots;
+		});
 	};
 
 	const handleGenerate = () => {
@@ -87,16 +95,16 @@ export const App: FC = () => {
 	};
 
 	const handleToggle = () => {
-		if (timerRef.current) {
+		if (typeof timerRef.current === 'number') {
+			setPlayState('iddle');
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 
 			return;
 		}
 
-		timerRef.current = setInterval(() => {
-			startRef.current?.click();
-		}, 150);
+		setPlayState('playing');
+		timerRef.current = setInterval(handleTick, 150);
 	};
 
 	const handleDotMouseMove = (e: any) => {
@@ -298,9 +306,10 @@ export const App: FC = () => {
 					{controlsView === 'minimal' && 'Show ▼'}
 				</div>
 				<Button onClick={ handleToggle }>
-					{typeof timerRef.current === 'number' ? 'Stop' : 'Start'}
+					{playState === 'iddle' && 'Start'}
+					{playState === 'playing' && 'Stop'}
 				</Button>
-				<Button ref={ startRef } onClick={ handleClick }>
+				<Button ref={ startRef } onClick={ handleTick }>
 					Tick
 				</Button>
 				<Button onClick={ handleGenerate }>Generate life</Button>
