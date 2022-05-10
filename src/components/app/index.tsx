@@ -28,6 +28,12 @@ const patternsMap = {
 	spaceship3,
 };
 
+const getRuleName = (rule: { s: Array<number>; b: Array<number> }) => {
+	const [s, b] = [rule.s, rule.b].map((item) => item.join(''));
+
+	return `B${b}/S${s}`;
+};
+
 export const App: FC = () => {
 	const CANVAS_WIDTH = (Math.trunc(window.innerWidth / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
 	const CANVAS_HEIGHT =
@@ -371,19 +377,19 @@ export const App: FC = () => {
 					name='rules'
 					options={ [
 						{
-							content: 'Default - S2/B23',
+							content: `Default - ${getRuleName(GAME_RULES.default)}`,
 							value: 'default',
 						},
 						{
-							content: 'Corals - S0123456789/B3',
+							content: `Corals - ${getRuleName(GAME_RULES.corals)}`,
 							value: 'corals',
 						},
 						{
-							content: 'Islands - S45678/B5678',
+							content: `Islands - ${getRuleName(GAME_RULES.islands)}`,
 							value: 'islands',
 						},
 						{
-							content: 'Fractals - S0123456789/B1',
+							content: `Fractals - ${getRuleName(GAME_RULES.fractals)}`,
 							value: 'fractals',
 						},
 					] }

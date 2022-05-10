@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
 import styles from './index.module.css';
-const s3 = new URL('./img/s3.png?width=60&height=60', import.meta.url);
-const s3_1 = new URL('./img/s3-1.png?width=60&height=60', import.meta.url);
-const b23 = new URL('./img/b23.png?width=60&height=60', import.meta.url);
-const b23_1 = new URL('./img/b23_1.png?width=60&height=60', import.meta.url);
+const b3 = new URL('./img/b3.png?width=60&height=60', import.meta.url);
+const b3_1 = new URL('./img/b3-1.png?width=60&height=60', import.meta.url);
+const s23 = new URL('./img/s23.png?width=60&height=60', import.meta.url);
+const s23_1 = new URL('./img/s23_1.png?width=60&height=60', import.meta.url);
 
 export const Help = () => {
 	const [showExplanation, setShowExplanation] = useState(false);
@@ -31,19 +31,19 @@ export const Help = () => {
 						initial conditions, the cells form various patterns throughout the course of
 						the game.
 					</div>
-					<div className={ styles.subtitle }>Rules(default - S3/B23)</div>
+					<div className={ styles.subtitle }>Rules(default - B3/S23)</div>
 					<div className={ styles.rules }>
 						<div>Each cell with 2 or 3 neighbors survives.</div>
 						<div className={ styles.example }>
-							<img src={ b23.href } />
+							<img src={ s23.href } />
 							-&gt;
-							<img src={ b23_1.href } />
+							<img src={ s23_1.href } />
 						</div>
 						<div>Each cell with 3 neighbors becomes populated.</div>
 						<div className={ styles.example }>
-							<img src={ s3.href } />
+							<img src={ b3.href } />
 							-&gt;
-							<img src={ s3_1.href } />
+							<img src={ b3_1.href } />
 						</div>
 						<div>
 							Each cell with &lt;=1 neighbors dies, as if by solitude.
