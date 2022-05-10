@@ -110,7 +110,7 @@ export const App: FC = () => {
 		}
 
 		setPlayState('playing');
-		timerRef.current = setInterval(handleTick, 150);
+		timerRef.current = setInterval(handleTick, 25);
 	};
 
 	const handleDotMouseMove = (e: any) => {
