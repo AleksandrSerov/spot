@@ -13,7 +13,7 @@
 		"lint:css": "stylelint ./src/**/*.css",
 		"lint:scripts": "eslint \"**/*.{js,jsx,ts,tsx}\" --ext .js,.jsx,.ts,.tsx",
 		"format": "prettier-eslint --write \"./{src,cypress}/**/*.{ts,tsx,css}\"",
-		"build": "rm -rf dist && parcel build --no-source-maps ./src/index.html",
+		"build": "rm -rf dist && parcel build --no-source-maps --public-url . ./src/index.html",
 		"deploy": "gh-pages -d dist",
 		"postinstall": "npx simple-git-hooks"
 	},
