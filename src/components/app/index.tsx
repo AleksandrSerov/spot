@@ -12,6 +12,7 @@ import { Select, SelectProps } from '../select';
 
 import { generateDots } from './utils/generate-dots';
 import { getNextTickDotStatus } from './utils/get-next-tick-dot-status';
+import { getRuleName } from './utils/get-rule-name';
 import { mergeDots } from './utils/merge-dots';
 import { moveTo } from './utils/move-to';
 import { ClickableAria } from './clickable-aria';
@@ -30,12 +31,6 @@ const patternsMap = {
 	diehard,
 };
 
-const getRuleName = (rule: { s: Array<number>; b: Array<number> }) => {
-	const [s, b] = [rule.s, rule.b].map((item) => item.join(''));
-
-	return `B${b}/S${s}`;
-};
-
 export const App: FC = () => {
 	const CANVAS_WIDTH = (Math.trunc(window.innerWidth / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
 	const CANVAS_HEIGHT =
@@ -45,7 +40,6 @@ export const App: FC = () => {
 		width: CANVAS_WIDTH,
 		height: CANVAS_HEIGHT,
 		size: DEFAULT_DOT_SIZE,
-		generateValue: () => 0,
 	});
 
 	const [controlsView, setControlsView] = useState<'full' | 'minimal'>('full');
@@ -63,14 +57,13 @@ export const App: FC = () => {
 	const timerRef = useRef<number | null>(null);
 
 	useEffect(() => {
-		setDots(
-			generateDots({
-				generateValue: () => 0,
-				width: CANVAS_WIDTH,
-				height: CANVAS_HEIGHT,
-				size: dotSize,
-			}),
-		);
+		const generated = generateDots({
+			width: CANVAS_WIDTH,
+			height: CANVAS_HEIGHT,
+			size: dotSize,
+		});
+
+		setDots(generated);
 	}, [CANVAS_HEIGHT, CANVAS_WIDTH, dotSize]);
 
 	const handleTick = () => {
@@ -110,7 +103,7 @@ export const App: FC = () => {
 		}
 
 		setPlayState('playing');
-		timerRef.current = setInterval(handleTick, 25);
+		timerRef.current = setInterval(handleTick, 75);
 	};
 
 	const handleDotMouseMove = (e: any) => {
@@ -220,14 +213,13 @@ export const App: FC = () => {
 		setDots(updatedDots);
 	};
 
-	const renderDot = ([i, j]: [number, number], dotValue: 0 | 1) => {
-		if (dotValue === 0) {
+	const renderDot = ([i, j]: [number, number]) => {
+		if (dots[i][j] === 0) {
 			return null;
 		}
 
 		return (
 			<Rectangle.Graphics
-				alive={ dotValue === 1 }
 				key={ `${i}_${j}` }
 				x={ j * dotSize }
 				y={ i * dotSize }
@@ -253,7 +245,7 @@ export const App: FC = () => {
 		0,
 	);
 
-	const maxPopulation = dots.length * dots.length;
+	const maxPopulation = dots.length * dots[0].length;
 	const handlePatternChange: SelectProps['onChange'] = (e) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
@@ -271,15 +263,11 @@ export const App: FC = () => {
 				tickCount={ tickCount }
 			/>
 			<div className={ styles.canvas }>
-				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-				{/* @ts-ignore */}
 				<Stage
 					width={ CANVAS_WIDTH }
 					height={ CANVAS_HEIGHT }
 					options={ {
-						width: CANVAS_WIDTH,
 						backgroundColor: string2hex('#ffffff'),
-						height: CANVAS_HEIGHT,
 						powerPreference: 'high-performance',
 					} }
 				>
@@ -291,9 +279,7 @@ export const App: FC = () => {
 						onPointerDown={ handlePointerDown }
 					/>
 
-					{dots.map((dotsArray, i) =>
-						dotsArray.map((dotValue, j) => renderDot([i, j], dotValue)),
-					)}
+					{dots.map((dotsArray, i) => dotsArray.map((_, j) => renderDot([i, j])))}
 
 					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
 				</Stage>

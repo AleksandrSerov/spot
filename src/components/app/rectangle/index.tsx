@@ -8,7 +8,6 @@ export type RectangleProps = {
 	y: number;
 	width: number;
 	height: number;
-	alive: boolean;
 	onClick: (e: any) => void;
 	onMouseOver: (e: any) => void;
 	onPointerDown: (e: any) => void;
