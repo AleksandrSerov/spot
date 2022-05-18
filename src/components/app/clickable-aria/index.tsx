@@ -7,9 +7,9 @@ import * as PIXI from 'pixi.js';
 export type Props = {
 	width: number;
 	height: number;
-	onClick: (e: any) => void;
-	onMouseOver: (e: any) => void;
-	onPointerDown: (e: any) => void;
+	onClick?: (e: any) => void;
+	onMouseOver?: (e: any) => void;
+	onPointerDown?: (e: any) => void;
 };
 
 const blackColorCode = '#fffff';
@@ -29,9 +29,15 @@ export const ClickableAria: FC<Props> = memo(
 				g.drawRect(0, 0, width, height);
 
 				g.endFill();
-				g.on('click', onClick);
-				g.on('mousemove', onMouseOver);
-				g.on('pointerdown', onPointerDown);
+				if (onClick) {
+					g.on('click', onClick);
+				}
+				if (onMouseOver) {
+					g.on('mousemove', onMouseOver);
+				}
+				if (onPointerDown) {
+					g.on('pointerdown', onPointerDown);
+				}
 			},
 			[width, height, onClick, onMouseOver, onPointerDown],
 		);

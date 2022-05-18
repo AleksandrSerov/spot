@@ -1,24 +1,24 @@
 .app {
 	position: relative;
+	display: grid;
+	grid-template-columns: min-content min-content;
+	justify-content: center;
 }
 
 .canvas {
-	overflow: hidden;
-	max-height: 100vh;
+	display: grid;
+	padding: 24px;
+	background-color: rgb(32, 178, 170, 0.8);
 }
 
 .controls {
 	padding: 24px 18px;
-	border: 1px solid black;
-	border-radius: 4px;
 	top: 60px;
 	left: 20px;
 	max-width: 300px;
-	position: absolute;
 	background-color: rgb(32, 178, 170, 0.8);
 	display: grid;
 	grid-gap: 24px;
-	transition: all ease-in-out 0.3s;
 }
 
 .dropdownButton {
@@ -27,20 +27,8 @@
 	text-align: right;
 }
 
-.full {
-	height: auto;
-}
-.minimal {
-	height: 20px;
-	overflow: hidden;
-}
-
 .stats {
-	position: absolute;
-	top: 0;
-	right: 0;
-	border: 1px solid black;
-	background-color: rgb(60, 238, 229, 0.7);
+	background-color: rgb(32, 178, 170, 0.8);
 }
 
 @media (max-width: 991px) {

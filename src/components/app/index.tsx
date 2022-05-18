@@ -1,209 +1,229 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
-import cn from 'classnames';
+import matches from 'lodash/matches';
 
-import backrake from '../../patterns/backrake.json';
-import diehard from '../../patterns/die-hard.json';
-import spaceship from '../../patterns/spaceship.json';
-import spaceship2 from '../../patterns/spaceship2.json';
 import { Button } from '../button';
-import { Select, SelectProps } from '../select';
 
 import { generateDots } from './utils/generate-dots';
-import { getNextTickDotStatus } from './utils/get-next-tick-dot-status';
-import { getRuleName } from './utils/get-rule-name';
 import { mergeDots } from './utils/merge-dots';
-import { moveTo } from './utils/move-to';
 import { ClickableAria } from './clickable-aria';
-import { DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
+import { DEFAULT_DOT_SIZE } from './constants';
 import { Grid } from './grid';
-import { Help } from './help';
 import { Rectangle } from './rectangle';
 import { Stats } from './stats';
 
 import styles from './index.module.css';
+type Direction = 'up' | 'down' | 'left' | 'right';
 
-const patternsMap = {
-	spaceship1: spaceship,
-	spaceship2,
-	backrake,
-	diehard,
+type SnakePart = [number, number];
+type Snake = [SnakePart, SnakePart];
+
+const getNextTickSnake = (snake: Snake, direction: Direction, dots: Array<Array<0 | 1>>) => {
+	const updatedSnake = [...snake];
+	const [oldHead] = updatedSnake;
+	const iIncMap = {
+		up: -1,
+		down: 1,
+		right: 0,
+		left: 0,
+	};
+	const jIncMap = {
+		up: 0,
+		down: 0,
+		right: 1,
+		left: -1,
+	};
+
+	const newHead = [oldHead[0] + iIncMap[direction], oldHead[1] + jIncMap[direction]];
+	const outOfBorders =
+		newHead[0] < 0 ||
+		newHead[1] < 0 ||
+		newHead[0] > dots.length - 1 ||
+		newHead[1] > dots.length - 1;
+
+	if (outOfBorders) {
+		return {
+			state: 'dead',
+			self: snake,
+		};
+	}
+	const isFood = dots[newHead[0]][newHead[1]] === 2;
+	const isObstacle = dots[newHead[0]][newHead[1]] === 1;
+
+	if (isObstacle) {
+		return {
+			state: 'dead',
+			self: snake,
+		};
+	}
+
+	if (isFood) {
+		return {
+			state: 'alive',
+			self: [newHead, ...snake.slice(0, snake.length)],
+		};
+	}
+
+	return {
+		state: 'alive',
+		self: [newHead, ...snake.slice(0, snake.length - 1)],
+	};
 };
 
 export const App: FC = () => {
-	const CANVAS_WIDTH = (Math.trunc(window.innerWidth / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
-	const CANVAS_HEIGHT =
-		(Math.trunc(window.innerHeight / DEFAULT_DOT_SIZE) + 1) * DEFAULT_DOT_SIZE;
+	const CANVAS_WIDTH = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
+	const CANVAS_HEIGHT = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
+	const midI = Math.trunc(CANVAS_WIDTH / DEFAULT_DOT_SIZE / 2) - 1;
+	const midJ = Math.trunc(CANVAS_HEIGHT / DEFAULT_DOT_SIZE / 2) - 1;
+	const defaultSnake = [
+		[midI, midJ],
+		[midI + 1, midJ],
+		[midI + 2, midJ],
+	];
 
-	const defaultDots = generateDots({
-		width: CANVAS_WIDTH,
-		height: CANVAS_HEIGHT,
-		size: DEFAULT_DOT_SIZE,
-	});
-
-	const [controlsView, setControlsView] = useState<'full' | 'minimal'>('full');
-	const [pattern, setPattern] = useState<keyof typeof patternsMap>('spaceship1');
-
-	const [pointerMode, setPointerMode] = useState<'default' | 'pattern'>('default');
-	const [fillingMode, setFillingMode] = useState<1 | 0 | null>(null);
-	const [prevDots, setPrevDots] = useState(defaultDots);
-	const [tickCount, setTickCount] = useState(0);
-	const [playState, setPlayState] = useState<'iddle' | 'playing'>('iddle');
-	const [rules, setRules] = useState(GAME_RULES.default);
-	const [dotSize, setDotSize] = useState(DEFAULT_DOT_SIZE);
-	const [dots, setDots] = useState(defaultDots);
-	const startRef = useRef<HTMLButtonElement>(null);
-	const timerRef = useRef<number | null>(null);
-
-	useEffect(() => {
-		const generated = generateDots({
+	const defaultDots = (() => {
+		const dots = generateDots({
+			generateValue: () => 0,
 			width: CANVAS_WIDTH,
 			height: CANVAS_HEIGHT,
-			size: dotSize,
+			size: DEFAULT_DOT_SIZE,
 		});
 
-		setDots(generated);
-	}, [CANVAS_HEIGHT, CANVAS_WIDTH, dotSize]);
+		const fitted = dots
+			.map((array, i) =>
+				array.map((_, j) => {
+					if (defaultSnake.some((item) => matches(item)([i, j]))) {
+						return 1;
+					}
 
-	const handleTick = () => {
-		setTickCount((prevTickCount) => prevTickCount + 1);
+					return dots[i][j];
+				}),
+			)
+			.map((array, i, arr) =>
+				array.map((_, j) => {
+					if (matches([i, j])([10, 10])) {
+						return 2;
+					}
 
-		setDots((prevDots) => {
-			const updatedDots = prevDots.map((dotsArray, i) =>
-				dotsArray.map((_, j) => getNextTickDotStatus(prevDots, [i, j], rules)),
+					return arr[i][j];
+				}),
 			);
 
-			return updatedDots;
-		});
-	};
+		return mergeDots(fitted, dots);
+	})();
+	const [snake, setSnake] = useState<{ state: 'alive' | 'dead'; self: Snake }>({
+		state: 'alive',
+		self: defaultSnake,
+	});
+	const [direction, setDirection] = useState<Direction>('up');
+	const [playState, setPlayState] = useState<'iddle' | 'playing'>('iddle');
+	const [dotSize] = useState(DEFAULT_DOT_SIZE);
+	const [dots, setDots] = useState(defaultDots);
+	const timerRef = useRef();
+	const tickButtonRef = useRef();
 
-	const handleGenerate = () => {
-		setDots(generateDots({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, size: dotSize }));
-	};
+	const handleChangeDirection = (e: any) => {
+		const directionByKey = {
+			KeyA: 'left',
+			KeyD: 'right',
+			KeyS: 'down',
+			KeyW: 'up',
+		} as const;
+		const oppositeDirection = {
+			up: 'down',
+			down: 'up',
+			left: 'right',
+			right: 'left',
+		} as const;
 
-	const handleClear = () => {
-		setDots(
-			generateDots({
-				width: CANVAS_WIDTH,
-				height: CANVAS_HEIGHT,
-				size: dotSize,
-				generateValue: () => 0,
-			}),
-		);
+		const code = e.code as 'KeyA' | 'KeyD' | 'KeyW' | 'KeyS';
+
+		const isOppositeDirection = direction === oppositeDirection[directionByKey[code]];
+		const isSameDirection = direction === directionByKey[code];
+
+		if (isSameDirection || isOppositeDirection) {
+			return;
+		}
+		setDirection(directionByKey[code]);
 	};
 
 	const handleToggle = () => {
-		if (typeof timerRef.current === 'number') {
+		setPlayState((playState) => (playState === 'playing' ? 'iddle' : 'playing'));
+	};
+
+	const handleTick = () => {
+		const { state, self: updatedSnake } = getNextTickSnake(snake.self, direction, dots);
+		const updatedDots = dots.map((dotsArray, i) =>
+			dotsArray.map((_, j) => {
+				const currentCoords = [i, j];
+
+				if (updatedSnake.some((item) => matches(item)(currentCoords))) {
+					return 1;
+				}
+				if (dots[i][j] === 2) {
+					return dots[i][j];
+				}
+
+				return 0;
+			}),
+		);
+		const foodCount = dots.reduce(
+			(acc, arr) => acc + arr.reduce((acc, item) => (item === 2 ? acc + 1 : acc), 0),
+			0,
+		);
+		const newFoodCoords = dots.flat(0);
+
+		setSnake({ state, self: updatedSnake });
+		setDots(updatedDots);
+	};
+
+	useEffect(() => {
+		if (snake.state === 'dead') {
+			alert('Game over');
 			setPlayState('iddle');
+		}
+	}, [snake.state]);
+
+	useEffect(() => {
+		if (playState === 'iddle') {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
+			setDots(defaultDots);
+			setDirection('up');
+			setSnake({
+				state: 'alive',
+				self: defaultSnake,
+			});
 
 			return;
 		}
 
-		setPlayState('playing');
-		timerRef.current = setInterval(handleTick, 75);
-	};
+		if (playState === 'playing') {
+			const timerId = setInterval(
+				() => {
+					tickButtonRef.current.click();
+				},
+				100,
+				snake,
+				dots,
+			);
 
-	const handleDotMouseMove = (e: any) => {
-		const { x: rawX, y: rawY } = e.data.global;
-
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
-
-		const leftMouseButtonPressed = e.data.buttons === 1;
-
-		if (!leftMouseButtonPressed) {
-			if (fillingMode !== null) {
-				setFillingMode(null);
-			}
-
-			if (pointerMode === 'pattern') {
-				const patternValue = patternsMap[pattern];
-
-				const fitted = (
-					dots.map((array, i) => array.map((_, j) => patternValue[i]?.[j] ?? 0)) as Array<
-						Array<1 | 0>
-					>
-				)
-					.map(
-						moveTo({
-							axis: 'x',
-							direction: 1,
-							offset: x - Math.trunc(patternValue[0].length / 2) - 1,
-						}),
-					)
-					.map(
-						moveTo({
-							axis: 'y',
-							direction: 1,
-							offset: y - Math.trunc(patternValue.length / 2) - 1,
-						}),
-					);
-
-				setDots(mergeDots(fitted, prevDots));
-			}
+			timerRef.current = timerId;
 
 			return;
 		}
-
-		if (leftMouseButtonPressed && pointerMode === 'default' && fillingMode === null) {
-			setFillingMode(Math.abs(1 - dots[y][x]) as 0 | 1);
-		}
-
-		if (fillingMode === null) {
-			return;
-		}
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => {
-				if (x === j && y === i) {
-					return fillingMode;
-				}
-
-				return dotValue;
-			}),
-		);
-
-		setDots(updatedDots);
-	};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [playState]);
 
 	const handleDotClick = (e: any) => {
-		if (pointerMode === 'pattern') {
-			setPointerMode('default');
-
-			return;
-		}
 		const { x: rawX, y: rawY } = e.data.global;
 		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 
 		const updatedDots = dots.map((dotsArray, i) =>
 			dotsArray.map((dotValue, j) => {
 				if (x === j && y === i) {
-					return Math.abs(1 - dotValue) as 0 | 1;
-				}
-
-				return dotValue;
-			}),
-		);
-
-		setDots(updatedDots);
-	};
-
-	const handlePointerDown = (e: any) => {
-		if (pointerMode === 'pattern') {
-			return;
-		}
-
-		const { x: rawX, y: rawY } = e.data.global;
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
-		const direction = Math.abs(1 - dots[y][x]) as 0 | 1;
-
-		setFillingMode(direction);
-
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => {
-				if (x === j && y === i) {
-					return direction;
+					return dotValue === 0 ? 2 : 0;
 				}
 
 				return dotValue;
@@ -214,7 +234,9 @@ export const App: FC = () => {
 	};
 
 	const renderDot = ([i, j]: [number, number]) => {
-		if (dots[i][j] === 0) {
+		const dotValue = dots[i][j];
+
+		if (dotValue === 0) {
 			return null;
 		}
 
@@ -225,44 +247,20 @@ export const App: FC = () => {
 				y={ i * dotSize }
 				width={ dotSize }
 				height={ dotSize }
-				onClick={ handleDotClick }
-				onMouseOver={ handleDotMouseMove }
-				onPointerDown={ handlePointerDown }
+				dotValue={ dotValue }
 			/>
 		);
 	};
 
-	const handleRulesChange = (e: any) => {
-		setRules(GAME_RULES[e.target.value as 'islands' | 'corals' | 'default']);
-	};
-
-	const handleDotSizeChange = (e: any) => {
-		setDotSize(Number(e.target.value));
-	};
-
-	const population = dots.reduce(
-		(acc, dotsArray) => acc + dotsArray.reduce((acc, item) => acc + item, 0 as number),
-		0,
-	);
-
-	const maxPopulation = dots.length * dots[0].length;
-	const handlePatternChange: SelectProps['onChange'] = (e) => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		setPattern(e.target.value);
-	};
-
 	return (
-		<div className={ styles.app }>
-			<Stats
-				className={ styles.stats }
-				canvasWidth={ CANVAS_WIDTH }
-				canvasHeight={ CANVAS_HEIGHT }
-				population={ population }
-				maxPopulation={ maxPopulation }
-				tickCount={ tickCount }
-			/>
+		<div className={ styles.app } onKeyPress={ handleChangeDirection }>
 			<div className={ styles.canvas }>
+				<Stats
+					className={ styles.stats }
+					canvasWidth={ CANVAS_WIDTH }
+					canvasHeight={ CANVAS_HEIGHT }
+					points={ snake.self.length }
+				/>
 				<Stage
 					width={ CANVAS_WIDTH }
 					height={ CANVAS_HEIGHT }
@@ -275,8 +273,6 @@ export const App: FC = () => {
 						width={ CANVAS_WIDTH }
 						height={ CANVAS_HEIGHT }
 						onClick={ handleDotClick }
-						onMouseOver={ handleDotMouseMove }
-						onPointerDown={ handlePointerDown }
 					/>
 
 					{dots.map((dotsArray, i) => dotsArray.map((_, j) => renderDot([i, j])))}
@@ -284,91 +280,16 @@ export const App: FC = () => {
 					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
 				</Stage>
 			</div>
-			<div className={ cn(styles.controls, [styles[controlsView]]) }>
-				<div
-					className={ styles.dropdownButton }
-					onClick={ () =>
-						setControlsView((prev) => (prev === 'full' ? 'minimal' : 'full'))
-					}
-				>
-					{controlsView === 'full' && 'Hide ▲'}
-					{controlsView === 'minimal' && 'Show ▼'}
-				</div>
+			<div className={ styles.controls }>
 				<Button onClick={ handleToggle }>
 					{playState === 'iddle' && 'Start'}
 					{playState === 'playing' && 'Stop'}
 				</Button>
-				<Button ref={ startRef } onClick={ handleTick }>
+
+				<Button ref={ tickButtonRef } onClick={ handleTick }>
 					Tick
 				</Button>
-				<Button onClick={ handleGenerate }>Generate life</Button>
-				<Button onClick={ handleClear }>Clear field</Button>
-				<Button
-					onClick={ () => {
-						setPointerMode('pattern');
-						setPrevDots(dots);
-					} }
-				>
-					Copy pattern
-				</Button>
-				<Select
-					label='Choose pattern, click Copy pattern'
-					onChange={ handlePatternChange }
-					id='pattern-select'
-					name='Pattern select'
-					value={ pattern }
-					options={ Object.keys(patternsMap).map((patternName) => ({
-						content: patternName,
-						value: patternName,
-					})) }
-				/>
-				<Select
-					label='Choose a dot size:'
-					onChange={ handleDotSizeChange }
-					id='dot-size'
-					name='Dot size'
-					value={ String(dotSize) }
-					options={ [
-						{
-							content: '20',
-							value: '20',
-						},
-						{
-							content: '10',
-							value: '10',
-						},
-						{
-							content: '5',
-							value: '5',
-						},
-					] }
-				/>
-				<Select
-					label='Choose a game rules'
-					onChange={ handleRulesChange }
-					id='rules-select'
-					name='rules'
-					options={ [
-						{
-							content: `Default - ${getRuleName(GAME_RULES.default)}`,
-							value: 'default',
-						},
-						{
-							content: `Corals - ${getRuleName(GAME_RULES.corals)}`,
-							value: 'corals',
-						},
-						{
-							content: `Islands - ${getRuleName(GAME_RULES.islands)}`,
-							value: 'islands',
-						},
-						{
-							content: `Fractals - ${getRuleName(GAME_RULES.fractals)}`,
-							value: 'fractals',
-						},
-					] }
-				/>
 			</div>
-			<Help />
 		</div>
 	);
 };

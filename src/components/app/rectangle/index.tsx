@@ -8,9 +8,10 @@ export type RectangleProps = {
 	y: number;
 	width: number;
 	height: number;
-	onClick: (e: any) => void;
-	onMouseOver: (e: any) => void;
-	onPointerDown: (e: any) => void;
+	dotValue: 1 | 2;
+	onClick?: (e: any) => void;
+	onMouseOver?: (e: any) => void;
+	onPointerDown?: (e: any) => void;
 };
 
 export const Rectangle: {

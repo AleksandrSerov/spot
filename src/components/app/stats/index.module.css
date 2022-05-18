@@ -2,7 +2,7 @@
 	display: grid;
 	justify-content: end;
 	align-self: end;
-	grid-template-columns: repeat(4, max-content);
+	grid-template-columns: repeat(2, max-content);
 	text-transform: uppercase;
 }
 

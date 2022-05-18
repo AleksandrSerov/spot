@@ -4,29 +4,17 @@ import cn from 'classnames';
 import styles from './index.module.css';
 
 type Props = {
-	tickCount: number;
-	population: number;
-	maxPopulation: number;
 	canvasWidth: number;
 	canvasHeight: number;
 	className?: string;
+	points: number;
 };
 
-export const Stats: VFC<Props> = ({
-	tickCount,
-	population,
-	maxPopulation,
-	canvasWidth,
-	canvasHeight,
-	className,
-}) => (
+export const Stats: VFC<Props> = ({ canvasWidth, canvasHeight, points, className }) => (
 	<div className={ cn(styles.stats, className) }>
-		<div>Tick: {tickCount}</div>
-		<div>Population: {population}</div>
-
-		<div>Max population: {maxPopulation}</div>
 		<div>
 			Canvas size: {canvasWidth}px X {canvasHeight}px
 		</div>
+		<div>Points: {points}</div>
 	</div>
 );
