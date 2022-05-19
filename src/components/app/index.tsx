@@ -1,8 +1,9 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { Stage } from '@inlet/react-pixi';
+import { applyDefaultProps, Stage } from '@inlet/react-pixi';
 import { string2hex } from '@pixi/utils';
 import matches from 'lodash/matches';
 
+import { getRandomInt } from '../../utils/get-random-int';
 import { Button } from '../button';
 
 import { generateDots } from './utils/generate-dots';
@@ -18,8 +19,33 @@ type Direction = 'up' | 'down' | 'left' | 'right';
 
 type SnakePart = [number, number];
 type Snake = [SnakePart, SnakePart];
+const FOOD_VALUE = 2;
 
-const getNextTickSnake = (snake: Snake, direction: Direction, dots: Array<Array<0 | 1>>) => {
+const getRandomEmptyDotPoint = (dots: Array<Array<0 | 1>>) => {
+	const coordsForRandom = dots
+		.map((array, i) =>
+			array.map((value, j) => {
+				if (value === 0) {
+					return [i, j];
+				}
+
+				return undefined;
+			}),
+		)
+		.flat(1)
+		.filter((v) => v);
+
+	const point = coordsForRandom[getRandomInt(coordsForRandom.length)];
+
+	return point as [number, number];
+};
+
+const getNextTickSnake = (
+	snake: Snake,
+	direction: Direction,
+	dots: Array<Array<0 | 1>>,
+	setFood: () => void,
+) => {
 	const updatedSnake = [...snake];
 	const [oldHead] = updatedSnake;
 	const iIncMap = {
@@ -48,7 +74,8 @@ const getNextTickSnake = (snake: Snake, direction: Direction, dots: Array<Array<
 			self: snake,
 		};
 	}
-	const isFood = dots[newHead[0]][newHead[1]] === 2;
+	const isFood = dots[newHead[0]][newHead[1]] === FOOD_VALUE;
+
 	const isObstacle = dots[newHead[0]][newHead[1]] === 1;
 
 	if (isObstacle) {
@@ -59,6 +86,8 @@ const getNextTickSnake = (snake: Snake, direction: Direction, dots: Array<Array<
 	}
 
 	if (isFood) {
+		setFood(null);
+
 		return {
 			state: 'alive',
 			self: [newHead, ...snake.slice(0, snake.length)],
@@ -71,47 +100,36 @@ const getNextTickSnake = (snake: Snake, direction: Direction, dots: Array<Array<
 	};
 };
 
+const CANVAS_WIDTH = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
+const CANVAS_HEIGHT = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
+
+const emptyDots = generateDots({
+	generateValue: () => 0,
+	width: CANVAS_WIDTH,
+	height: CANVAS_HEIGHT,
+	size: DEFAULT_DOT_SIZE,
+});
+
 export const App: FC = () => {
-	const CANVAS_WIDTH = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
-	const CANVAS_HEIGHT = Math.trunc(700 / DEFAULT_DOT_SIZE) * DEFAULT_DOT_SIZE;
 	const midI = Math.trunc(CANVAS_WIDTH / DEFAULT_DOT_SIZE / 2) - 1;
 	const midJ = Math.trunc(CANVAS_HEIGHT / DEFAULT_DOT_SIZE / 2) - 1;
 	const defaultSnake = [
 		[midI, midJ],
 		[midI + 1, midJ],
 		[midI + 2, midJ],
+		[midI + 3, midJ],
 	];
 
 	const defaultDots = (() => {
-		const dots = generateDots({
-			generateValue: () => 0,
-			width: CANVAS_WIDTH,
-			height: CANVAS_HEIGHT,
-			size: DEFAULT_DOT_SIZE,
+		const dots = emptyDots;
+
+		defaultSnake.forEach(([i, j]) => {
+			dots[i][j] = 1;
 		});
 
-		const fitted = dots
-			.map((array, i) =>
-				array.map((_, j) => {
-					if (defaultSnake.some((item) => matches(item)([i, j]))) {
-						return 1;
-					}
-
-					return dots[i][j];
-				}),
-			)
-			.map((array, i, arr) =>
-				array.map((_, j) => {
-					if (matches([i, j])([10, 10])) {
-						return 2;
-					}
-
-					return arr[i][j];
-				}),
-			);
-
-		return mergeDots(fitted, dots);
+		return mergeDots(dots, dots);
 	})();
+
 	const [snake, setSnake] = useState<{ state: 'alive' | 'dead'; self: Snake }>({
 		state: 'alive',
 		self: defaultSnake,
@@ -120,10 +138,17 @@ export const App: FC = () => {
 	const [playState, setPlayState] = useState<'iddle' | 'playing'>('iddle');
 	const [dotSize] = useState(DEFAULT_DOT_SIZE);
 	const [dots, setDots] = useState(defaultDots);
+	const dotsRef = useRef(dots);
+	const [food, setFood] = useState<null | [number, number]>(getRandomEmptyDotPoint(dots));
 	const timerRef = useRef();
-	const tickButtonRef = useRef();
 
+	useEffect(() => {
+		dotsRef.current = dots;
+	}, [dots]);
 	const handleChangeDirection = (e: any) => {
+		if (playState === 'iddle') {
+			setPlayState('playing');
+		}
 		const directionByKey = {
 			KeyA: 'left',
 			KeyD: 'right',
@@ -139,51 +164,36 @@ export const App: FC = () => {
 
 		const code = e.code as 'KeyA' | 'KeyD' | 'KeyW' | 'KeyS';
 
-		const isOppositeDirection = direction === oppositeDirection[directionByKey[code]];
-		const isSameDirection = direction === directionByKey[code];
+		const newDirection = directionByKey[code];
+
+		const isOppositeDirection = direction === oppositeDirection[newDirection];
+		const isSameDirection = direction === newDirection;
+
+		const nextDotTheOwnBody =
+			getNextTickSnake(snake.self, direction, dots, setFood).self[0] === snake.self[1];
 
 		if (isSameDirection || isOppositeDirection) {
 			return;
 		}
-		setDirection(directionByKey[code]);
-	};
-
-	const handleToggle = () => {
-		setPlayState((playState) => (playState === 'playing' ? 'iddle' : 'playing'));
+		if (nextDotTheOwnBody) {
+			return;
+		}
+		setDirection(newDirection);
+		handleTick();
 	};
 
 	const handleTick = () => {
-		const { state, self: updatedSnake } = getNextTickSnake(snake.self, direction, dots);
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((_, j) => {
-				const currentCoords = [i, j];
+		setSnake((prevSnake) => {
+			const { state, self: updatedSnake } = getNextTickSnake(
+				prevSnake.self,
+				direction,
+				dotsRef.current,
+				setFood,
+			);
 
-				if (updatedSnake.some((item) => matches(item)(currentCoords))) {
-					return 1;
-				}
-				if (dots[i][j] === 2) {
-					return dots[i][j];
-				}
-
-				return 0;
-			}),
-		);
-		const foodCount = dots.reduce(
-			(acc, arr) => acc + arr.reduce((acc, item) => (item === 2 ? acc + 1 : acc), 0),
-			0,
-		);
-		const newFoodCoords = dots.flat(0);
-
-		setSnake({ state, self: updatedSnake });
-		setDots(updatedDots);
+			return { state, self: updatedSnake };
+		});
 	};
-
-	useEffect(() => {
-		if (snake.state === 'dead') {
-			alert('Game over');
-			setPlayState('iddle');
-		}
-	}, [snake.state]);
 
 	useEffect(() => {
 		if (playState === 'iddle') {
@@ -200,21 +210,14 @@ export const App: FC = () => {
 		}
 
 		if (playState === 'playing') {
-			const timerId = setInterval(
-				() => {
-					tickButtonRef.current.click();
-				},
-				100,
-				snake,
-				dots,
-			);
+			clearInterval(timerRef.current);
+			const timerId = setInterval(handleTick, 100);
 
 			timerRef.current = timerId;
 
 			return;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [playState]);
+	}, [playState, direction]);
 
 	const handleDotClick = (e: any) => {
 		const { x: rawX, y: rawY } = e.data.global;
@@ -252,14 +255,55 @@ export const App: FC = () => {
 		);
 	};
 
+	useEffect(() => {
+		if (food === null) {
+			setFood(getRandomEmptyDotPoint(dots));
+
+			return;
+		}
+
+		const nextDots = generateDots({
+			generateValue: () => 0,
+			width: CANVAS_WIDTH,
+			height: CANVAS_HEIGHT,
+			size: DEFAULT_DOT_SIZE,
+		});
+
+		snake.self.forEach((snakeBody) => {
+			const [i, j] = snakeBody;
+
+			nextDots[i][j] = 1;
+		});
+
+		const [foodI, foodJ] = food;
+
+		nextDots[foodI][foodJ] = 2;
+		setDots(nextDots);
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [food, snake.self]);
+
+	useEffect(() => {
+		if (snake.state === 'dead') {
+			alert('Game over');
+			setPlayState('iddle');
+		}
+	}, [snake.state]);
+
+	useEffect(() => {
+		window.addEventListener('keypress', handleChangeDirection);
+
+		return () => window.removeEventListener('keypress', handleChangeDirection);
+	});
+
 	return (
-		<div className={ styles.app } onKeyPress={ handleChangeDirection }>
+		<div className={ styles.app }>
 			<div className={ styles.canvas }>
 				<Stats
 					className={ styles.stats }
 					canvasWidth={ CANVAS_WIDTH }
 					canvasHeight={ CANVAS_HEIGHT }
-					points={ snake.self.length }
+					points={ snake.self.length - 3 }
 				/>
 				<Stage
 					width={ CANVAS_WIDTH }
@@ -280,16 +324,7 @@ export const App: FC = () => {
 					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
 				</Stage>
 			</div>
-			<div className={ styles.controls }>
-				<Button onClick={ handleToggle }>
-					{playState === 'iddle' && 'Start'}
-					{playState === 'playing' && 'Stop'}
-				</Button>
-
-				<Button ref={ tickButtonRef } onClick={ handleTick }>
-					Tick
-				</Button>
-			</div>
+			<div className={ styles.controls }>{playState}</div>
 		</div>
 	);
 };
