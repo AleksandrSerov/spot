@@ -25,7 +25,7 @@
 		"@types/node": "^17.0.31",
 		"@types/three": "^0.139.0",
 		"classnames": "^2.3.1",
-		"parcel": "^2.2.1",
+		"parcel": "^2.8.0",
 		"pixi.js": "^6.3.1",
 		"react": "17.0.0",
 		"react-dom": "17.0.0",
