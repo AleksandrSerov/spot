@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import Stats from 'stats.js';
 
 import { App } from './app';
@@ -29,7 +29,8 @@ const initStats = () => {
 //@ts-ignore
 process.env.NODE_ENV !== 'production' && initStats();
 
-const root = document.getElementById('app');
+const container = document.getElementById('app');
+const root = createRoot(container!);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 
 const WrappedApp = () => {
@@ -45,4 +46,4 @@ const WrappedApp = () => {
 	return <App />;
 };
 
-ReactDOM.render(<WrappedApp />, root);
+root.render(<WrappedApp />);

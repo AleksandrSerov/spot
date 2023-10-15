@@ -1,4 +1,4 @@
-import React, { ReactNode, VFC } from 'react';
+import React, { FC, ReactNode } from 'react';
 
 import styles from './index.module.css';
 
@@ -14,7 +14,7 @@ export type SelectProps = {
 	}>;
 };
 
-export const Select: VFC<SelectProps> = ({ onChange, id, name, options, label, value }) => (
+export const Select: FC<SelectProps> = ({ onChange, id, name, options, label, value }) => (
 	<div className={ styles.component }>
 		<label htmlFor={ id }>{label}</label>
 		<select name={ name } id={ id } onChange={ onChange } className={ styles.select } value={ value }>

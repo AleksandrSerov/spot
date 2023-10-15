@@ -1,7 +1,7 @@
-import { FC, useEffect, useRef, useState } from 'react';
-import { Stage } from '@inlet/react-pixi';
-import { string2hex } from '@pixi/utils';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { Stage } from '@pixi/react';
 import cn from 'classnames';
+import { Color } from 'pixi.js';
 
 import backrake from '../../patterns/backrake.json';
 import diehard from '../../patterns/die-hard.json';
@@ -15,11 +15,11 @@ import { getNextTickDotStatus } from './utils/get-next-tick-dot-status';
 import { getRuleName } from './utils/get-rule-name';
 import { mergeDots } from './utils/merge-dots';
 import { moveTo } from './utils/move-to';
-import { ClickableAria } from './clickable-aria';
+import { ClickableLayer } from './clickable-layer';
 import { DEFAULT_DOT_SIZE, GAME_RULES } from './constants';
-import { Grid } from './grid';
+import { DotsLayer } from './dots-layer';
+import { GridLayer } from './grid-layer';
 import { Help } from './help';
-import { Rectangle } from './rectangle';
 import { Stats } from './stats';
 
 import styles from './index.module.css';
@@ -103,134 +103,124 @@ export const App: FC = () => {
 		}
 
 		setPlayState('playing');
-		timerRef.current = setInterval(handleTick, 75);
+		timerRef.current = setInterval(handleTick, 67);
 	};
 
-	const handleDotMouseMove = (e: any) => {
-		const { x: rawX, y: rawY } = e.data.global;
+	const handleDotMouseMove = useCallback(
+		(e: any) => {
+			const { x: rawX, y: rawY } = e.data.global;
 
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+			const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 
-		const leftMouseButtonPressed = e.data.buttons === 1;
+			const leftMouseButtonPressed = e.data.buttons === 1;
 
-		if (!leftMouseButtonPressed) {
-			if (fillingMode !== null) {
-				setFillingMode(null);
-			}
+			if (!leftMouseButtonPressed) {
+				if (fillingMode !== null) {
+					setFillingMode(null);
+				}
 
-			if (pointerMode === 'pattern') {
-				const patternValue = patternsMap[pattern];
+				if (pointerMode === 'pattern') {
+					const patternValue = patternsMap[pattern];
 
-				const fitted = (
-					dots.map((array, i) => array.map((_, j) => patternValue[i]?.[j] ?? 0)) as Array<
-						Array<1 | 0>
-					>
-				)
-					.map(
-						moveTo({
-							axis: 'x',
-							direction: 1,
-							offset: x - Math.trunc(patternValue[0].length / 2) - 1,
-						}),
+					const fitted = (
+						dots.map((array, i) =>
+							array.map((_, j) => patternValue[i]?.[j] ?? 0),
+						) as Array<Array<1 | 0>>
 					)
-					.map(
-						moveTo({
-							axis: 'y',
-							direction: 1,
-							offset: y - Math.trunc(patternValue.length / 2) - 1,
-						}),
-					);
+						.map(
+							moveTo({
+								axis: 'x',
+								direction: 1,
+								offset: x - Math.trunc(patternValue[0].length / 2) - 1,
+							}),
+						)
+						.map(
+							moveTo({
+								axis: 'y',
+								direction: 1,
+								offset: y - Math.trunc(patternValue.length / 2) - 1,
+							}),
+						);
 
-				setDots(mergeDots(fitted, prevDots));
+					setDots(mergeDots(fitted, prevDots));
+				}
+
+				return;
 			}
 
-			return;
-		}
+			if (leftMouseButtonPressed && pointerMode === 'default' && fillingMode === null) {
+				setFillingMode(Math.abs(1 - dots[y][x]) as 0 | 1);
+			}
 
-		if (leftMouseButtonPressed && pointerMode === 'default' && fillingMode === null) {
-			setFillingMode(Math.abs(1 - dots[y][x]) as 0 | 1);
-		}
+			if (fillingMode === null) {
+				return;
+			}
+			const updatedDots = dots.map((dotsArray, i) =>
+				dotsArray.map((dotValue, j) => {
+					if (x === j && y === i) {
+						return fillingMode;
+					}
 
-		if (fillingMode === null) {
-			return;
-		}
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => {
-				if (x === j && y === i) {
-					return fillingMode;
-				}
+					return dotValue;
+				}),
+			);
 
-				return dotValue;
-			}),
-		);
+			setDots(updatedDots);
+		},
+		[dotSize, dots, fillingMode, pattern, pointerMode, prevDots],
+	);
 
-		setDots(updatedDots);
-	};
+	const handleDotClick = useCallback(
+		(e: any) => {
+			if (pointerMode === 'pattern') {
+				setPointerMode('default');
 
-	const handleDotClick = (e: any) => {
-		if (pointerMode === 'pattern') {
-			setPointerMode('default');
+				return;
+			}
+			const { x: rawX, y: rawY } = e.data.global;
+			const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
 
-			return;
-		}
-		const { x: rawX, y: rawY } = e.data.global;
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+			const updatedDots = dots.map((dotsArray, i) =>
+				dotsArray.map((dotValue, j) => {
+					if (x === j && y === i) {
+						return Math.abs(1 - dotValue) as 0 | 1;
+					}
 
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => {
-				if (x === j && y === i) {
-					return Math.abs(1 - dotValue) as 0 | 1;
-				}
+					return dotValue;
+				}),
+			);
 
-				return dotValue;
-			}),
-		);
+			setDots(updatedDots);
+		},
+		[dotSize, dots, pointerMode],
+	);
 
-		setDots(updatedDots);
-	};
+	const handlePointerDown = useCallback(
+		(e: any) => {
+			if (pointerMode === 'pattern') {
+				return;
+			}
 
-	const handlePointerDown = (e: any) => {
-		if (pointerMode === 'pattern') {
-			return;
-		}
+			const { x: rawX, y: rawY } = e.data.global;
+			const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
+			const direction = Math.abs(1 - dots[y][x]) as 0 | 1;
 
-		const { x: rawX, y: rawY } = e.data.global;
-		const [x, y] = [rawX / dotSize, rawY / dotSize].map(Math.trunc);
-		const direction = Math.abs(1 - dots[y][x]) as 0 | 1;
+			setFillingMode(direction);
 
-		setFillingMode(direction);
+			const updatedDots = dots.map((dotsArray, i) =>
+				dotsArray.map((dotValue, j) => {
+					if (x === j && y === i) {
+						return direction;
+					}
 
-		const updatedDots = dots.map((dotsArray, i) =>
-			dotsArray.map((dotValue, j) => {
-				if (x === j && y === i) {
-					return direction;
-				}
+					return dotValue;
+				}),
+			);
 
-				return dotValue;
-			}),
-		);
-
-		setDots(updatedDots);
-	};
-
-	const renderDot = ([i, j]: [number, number]) => {
-		if (dots[i][j] === 0) {
-			return null;
-		}
-
-		return (
-			<Rectangle.Graphics
-				key={ `${i}_${j}` }
-				x={ j * dotSize }
-				y={ i * dotSize }
-				width={ dotSize }
-				height={ dotSize }
-				onClick={ handleDotClick }
-				onMouseOver={ handleDotMouseMove }
-				onPointerDown={ handlePointerDown }
-			/>
-		);
-	};
+			setDots(updatedDots);
+		},
+		[dotSize, dots, pointerMode],
+	);
 
 	const handleRulesChange = (e: any) => {
 		setRules(GAME_RULES[e.target.value as 'islands' | 'corals' | 'default']);
@@ -263,25 +253,16 @@ export const App: FC = () => {
 				tickCount={ tickCount }
 			/>
 			<div className={ styles.canvas }>
-				<Stage
-					width={ CANVAS_WIDTH }
-					height={ CANVAS_HEIGHT }
-					options={ {
-						backgroundColor: string2hex('#ffffff'),
-						powerPreference: 'high-performance',
-					} }
-				>
-					<ClickableAria
+				<Stage width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT }>
+					<ClickableLayer
 						width={ CANVAS_WIDTH }
 						height={ CANVAS_HEIGHT }
 						onClick={ handleDotClick }
 						onMouseOver={ handleDotMouseMove }
 						onPointerDown={ handlePointerDown }
 					/>
-
-					{dots.map((dotsArray, i) => dotsArray.map((_, j) => renderDot([i, j])))}
-
-					<Grid width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
+					<DotsLayer matrix={ dots } width={ dotSize } height={ dotSize } />
+					<GridLayer width={ CANVAS_WIDTH } height={ CANVAS_HEIGHT } dotWidth={ dotSize } />
 				</Stage>
 			</div>
 			<div className={ cn(styles.controls, [styles[controlsView]]) }>

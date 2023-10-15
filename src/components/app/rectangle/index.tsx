@@ -1,6 +1,5 @@
 import { FC } from 'react';
 
-import { Graphics } from './graphics';
 import { Sprite } from './sprite';
 
 export type RectangleProps = {
@@ -14,9 +13,7 @@ export type RectangleProps = {
 };
 
 export const Rectangle: {
-	Graphics: FC<RectangleProps>;
 	Sprite: FC<RectangleProps>;
 } = {
-	Graphics,
 	Sprite,
 };

@@ -1,9 +1,7 @@
-/* eslint-disable react/display-name */
 import { FC, memo, useCallback } from 'react';
-import { Graphics as PixiGraphics, useApp } from '@inlet/react-pixi';
-import { string2hex } from '@pixi/utils';
+import { Graphics as PixiGraphics } from '@pixi/react';
 import * as PIXI from 'pixi.js';
-
+import { Color } from 'pixi.js';
 export type Props = {
 	width: number;
 	height: number;
@@ -12,20 +10,14 @@ export type Props = {
 	onPointerDown: (e: any) => void;
 };
 
-const blackColorCode = '#fffff';
-
-export const ClickableAria: FC<Props> = memo(
+export const ClickableLayer: FC<Props> = memo(
 	({ onClick, onMouseOver, width, height, onPointerDown }) => {
-		const app = useApp();
-
-		app.renderer.plugins.interaction.moveWhenInside = true;
-
 		const draw = useCallback(
 			(g: PIXI.Graphics) => {
 				g.clear();
+				g.eventMode = 'static';
 				g.removeAllListeners();
-				g.interactive = true;
-				g.beginFill(string2hex(blackColorCode));
+				g.beginFill(new Color('#3ceee5').toHex());
 				g.drawRect(0, 0, width, height);
 
 				g.endFill();
@@ -39,3 +31,5 @@ export const ClickableAria: FC<Props> = memo(
 		return <PixiGraphics x={ 0 } y={ 0 } draw={ draw } />;
 	},
 );
+
+ClickableLayer.displayName = 'ClickableLayer';

@@ -20,15 +20,15 @@
 	"author": "Aleksandr Serov",
 	"license": "ISC",
 	"dependencies": {
-		"@inlet/react-pixi": "^6.7.0",
-		"@pixi/utils": "^6.3.1",
+		"@pixi/react": "^7.1.1",
+		"@pixi/utils": "^7.0.0",
 		"@types/node": "^17.0.31",
 		"@types/three": "^0.139.0",
 		"classnames": "^2.3.1",
 		"parcel": "^2.2.1",
-		"pixi.js": "^6.3.1",
-		"react": "17.0.0",
-		"react-dom": "17.0.0",
+		"pixi.js": "^7.3.1",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
 		"sharp": "0.29.1",
 		"stats.js": "^0.17.0"
 	},
@@ -40,8 +40,8 @@
 		"@sserov/presets-lint": "^0.0.9",
 		"@testing-library/cypress": "^8.0.1",
 		"@types/jest": "^27.4.1",
-		"@types/react": "^17.0.0",
-		"@types/react-dom": "^17.0.0",
+		"@types/react": "^18.0.0",
+		"@types/react-dom": "^18.0.0",
 		"@types/stats.js": "^0.17.0",
 		"@typescript-eslint/eslint-plugin": "^4.32.0",
 		"@typescript-eslint/parser": "^4.32.0",
@@ -81,7 +81,7 @@
 		"webpack": "^5.65.0"
 	},
 	"engines": {
-		"node": "16.x"
+		"node": "18.x"
 	},
 	"browserslist": {
 		"production": [

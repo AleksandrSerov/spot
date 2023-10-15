@@ -1,19 +1,19 @@
-import { FC, useCallback } from 'react';
-import { Graphics } from '@inlet/react-pixi';
-import { string2hex } from '@pixi/utils';
+import { FC, memo, useCallback } from 'react';
+import { Graphics } from '@pixi/react';
 import * as PIXI from 'pixi.js';
-
-type Props = {
+import { Color } from 'pixi.js';
+type GridLayer = {
 	width: number;
 	height: number;
 	dotWidth: number;
 };
 
-export const Grid: FC<Props> = ({ width, height, dotWidth }) => {
+export const GridLayer: FC<GridLayer> = memo(({ width, height, dotWidth }) => {
 	const draw = useCallback(
 		(g: PIXI.Graphics) => {
 			g.clear();
-			g.lineStyle(1, string2hex('black'), 0.3);
+			g.lineStyle(1, new Color('black').toHex(), 0.3);
+			g.beginFill(new Color('black').toHex());
 			g.moveTo(0, 0);
 			g.lineTo(width, 0);
 			for (let x = dotWidth; x < height; x += dotWidth) {
@@ -29,4 +29,6 @@ export const Grid: FC<Props> = ({ width, height, dotWidth }) => {
 	);
 
 	return <Graphics x={ 0 } y={ 0 } draw={ draw } />;
-};
+});
+
+GridLayer.displayName = 'GridLayer';
